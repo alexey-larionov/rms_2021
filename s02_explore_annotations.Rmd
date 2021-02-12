@@ -1,11 +1,14 @@
 ---
 title: "Explore annotations"
 author: "Alexey Larionov"
-date: "10 Feb 2021"
+date: "12 Feb 2021"
 output:
   html_document:
     toc: true
-    toc_float: true
+    number_sections: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
 editor_options:
   chunk_output_type: console
 ---
@@ -157,7 +160,7 @@ SJRHB020.df %>%
 
 ```
 
-## Check what gene names from the list are used by annotations  
+## Check gene names  
 
 ```{r}
 
@@ -240,7 +243,7 @@ SJRHB020.df %>%
 
 # Predicted impact
 
-## Overall impact: Func.refGene
+## Overall: Func.refGene
 
 **Functionaly important annotations:**  
 "splicing", "exonic;splicing"  
@@ -255,7 +258,7 @@ SJRHB020.df %>%
 
 ```
 
-## Coding variants: ExonicFunc.refGene
+## Coding: ExonicFunc.refGene
 
 **Functionaly important annotations:**
 stopgain, frameshift deletion, frameshift insertion, 

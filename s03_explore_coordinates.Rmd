@@ -1,11 +1,14 @@
 ---
 title: "Explore coordinates"
 author: "Alexey Larionov"
-date: "11 Feb 2021"
+date: "12 Feb 2021"
 output:
   html_document:
     toc: true
-    toc_float: true
+    number_sections: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
 editor_options:
   chunk_output_type: console
 ---
@@ -69,7 +72,7 @@ colnames(SJRHB020.df)
 
 ```
 
-# Explore variant with top BASS score
+# Explore top BASS variant
 
 Also: synonimous in No 11 and 15 ...
 Also, there are OR-s in No 3, 12 and 13 ...
