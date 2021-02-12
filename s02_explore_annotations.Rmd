@@ -1,0 +1,347 @@
+---
+title: "Explore annotations"
+author: "Alexey Larionov"
+date: "10 Feb 2021"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+editor_options:
+  chunk_output_type: console
+---
+
+# Summary
+
+Explore annotations in a filtered single-sample germline short variant VCF from EZ pipeline to select criteria for variant pathogenecity.  
+
+Assuming that variants are of good quality (QC etc).  
+
+Not considering AF-s yet.  
+
+# Start section
+
+<style>
+pre {
+  overflow-x: auto;
+}
+pre code {
+  word-wrap: normal;
+  white-space: pre;
+}
+</style>
+
+```{r echo=F}
+options(width = 999)
+```
+
+```{r}
+
+# Time stamp
+Sys.time()
+
+# Clenan-up
+rm(list=ls())
+graphics.off()
+
+# Memory
+gc()
+
+# Options
+options(stringsAsFactors=F)
+
+# Folders
+working_folder <- "/Users/alexey/Documents/mg/s2021/RMSzhang_SJRHB020"
+setwd(working_folder)
+
+# Libraries
+library(dplyr)
+
+```
+
+# Read data
+
+```{r}
+
+SJRHB020.df <- read.table("RMSzhang_SJRHB020_hg38.bwa.QC.scores.filter.txt",
+                         header=T, sep = "\t", quote = "", na.strings="-9")
+
+dim(SJRHB020.df)
+colnames(SJRHB020.df)
+str(SJRHB020.df,list.len = Inf)
+head(SJRHB020.df)
+
+```
+
+# Check for columns with all NA 
+
+```{r}
+
+all_na.udf <- function(x){all(is.na(x))}
+
+all_na <- apply(SJRHB020.df,2,all_na.udf)
+sum(all_na)
+
+rm(all_na.udf,all_na)
+
+```
+
+# Check for uniform columns  
+
+```{r}
+
+uniform.udf <- function(x){length(table(x,useNA="no"))==1}
+uniform <- apply(SJRHB020.df,2,uniform.udf)
+sum(uniform)
+
+rm(uniform.udf,uniform)
+
+```
+
+# Explore chromosome names
+
+```{r}
+
+# Check for missed data
+sum(is.na(SJRHB020.df$Chr))
+
+# Names of contigs
+all_contigs <- unique(SJRHB020.df$Chr)
+all_contigs
+
+# Convert to a factor with the proper order of chromosomes
+canonical_chromosomes <- c("chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10",
+       "chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20",
+       "chr21","chr22","chrX","chrY","chrM")
+
+other_contigs <- all_contigs[! all_contigs %in% canonical_chromosomes]
+other_contigs
+
+SJRHB020.df$Chr <- factor(SJRHB020.df$Chr, levels=c(canonical_chromosomes,other_contigs))
+
+# Count variants per chromosome
+SJRHB020.df %>% 
+  group_by(Chr) %>% 
+  summarise(Num_var=n()) %>% 
+  arrange(Chr) %>% 
+  print(n=Inf)
+
+# Clean-up
+rm(all_contigs,canonical_chromosomes,other_contigs)
+
+```
+
+# Gene names: Gene.refGene
+
+```{r}
+
+# Check for missed data
+sum(is.na(SJRHB020.df$Gene.refGene))
+
+# Exampes of genes for intergenic variants
+SJRHB020.df %>% 
+  select(Gene.refGene,Func.refGene) %>% 
+  filter(Func.refGene=="intergenic") %>% 
+  head()
+
+# Excamples of genes for upstream varisnts
+SJRHB020.df %>% 
+  select(Gene.refGene,Func.refGene) %>% 
+  filter(Func.refGene=="upstream") %>% 
+  head()
+
+# Excamples of genes for "upstream;downstream" varisnts
+SJRHB020.df %>% 
+  select(Gene.refGene,Func.refGene) %>% 
+  filter(Func.refGene=="upstream;downstream") %>% 
+  head()
+
+```
+
+## Check what gene names from the list are used by annotations  
+
+```{r}
+
+# Read the gene list
+genes_166 <- scan("rms_genes_166.txt", what="character")
+
+# Count gene names that are present in the annotations
+sum(genes_166 %in% SJRHB020.df$Gene.refGene)
+
+# Gene names from list-166 that may be absent in annotations
+genes_166[! genes_166 %in% SJRHB020.df$Gene.refGene]
+
+# Clean-up
+rm(genes_166)
+
+```
+
+# Known impact: ClinVar
+
+##CLNSIG
+
+**Inclusion:**
+Pathogenic, Likely_pathogenic
+
+association
+association,_risk_factor
+
+**Exclusion:**
+Benign,
+
+Conflicting_interpretations_of_pathogenicity
+
+```{r}
+
+SJRHB020.df %>% 
+  group_by(CLNSIG) %>% 
+  summarise(Num_var=n()) %>% 
+  arrange(desc(Num_var)) %>% 
+  print(n=Inf)
+
+```
+
+##CLNREVSTAT
+
+Inclusion:
+reviewed_by_expert_panel
+criteria_provided,_multiple_submitters,_no_conflicts
+
+criteria_provided,_single_submitter
+
+```{r}
+
+SJRHB020.df %>% 
+  group_by(CLNREVSTAT) %>% 
+  summarise(Num_var=n()) %>% 
+  arrange(desc(Num_var)) %>% 
+  print(n=Inf)
+
+
+```
+
+## CLNDN
+
+Ignore this field for filtering, only to explore
+
+```{r}
+
+sum(is.na(SJRHB020.df$CLNDN))
+
+all_codes <- unique(SJRHB020.df$CLNDN)
+length(all_codes)
+
+SJRHB020.df %>% 
+  group_by(CLNDN) %>% 
+  summarise(Num_var=n()) %>% 
+  arrange(desc(Num_var)) %>% 
+  head()
+
+```
+
+# Predicted impact
+
+## Overall impact: Func.refGene
+
+**Functionaly important annotations:**  
+"splicing", "exonic;splicing"  
+
+```{r}
+
+SJRHB020.df %>% 
+  group_by(Func.refGene) %>% 
+  summarise(Num_var=n()) %>% 
+  arrange(desc(Num_var)) %>% 
+  print(n=Inf)
+
+```
+
+## Coding variants: ExonicFunc.refGene
+
+**Functionaly important annotations:**
+stopgain, frameshift deletion, frameshift insertion, 
+
+**Additional functionaly important annotations:**
+Depend on the CADD, BASS etc
+nonframeshift deletion, nonframeshift insertion, stoploss?
+
+
+```{r}
+
+SJRHB020.df %>% 
+  group_by(ExonicFunc.refGene) %>% 
+  summarise(Num_var=n()) %>% 
+  arrange(desc(Num_var)) %>% 
+  print(n=Inf)
+
+# Look at Func.refGene in NA ExonicFunc.refGene
+SJRHB020.df %>% 
+  select(Gene.refGene,Func.refGene,ExonicFunc.refGene) %>% 
+  filter(is.na(ExonicFunc.refGene)) %>% 
+  group_by(Func.refGene) %>% 
+  summarise(count=n()) %>% 
+  arrange(desc(count))
+
+```
+
+## BASS
+
+```{r}
+
+sum(is.na(SJRHB020.df$Score))
+hist(SJRHB020.df$Score)
+abline(v=0.6, col="red", lty=2)
+sum(SJRHB020.df$Score>=0.6)
+
+```
+
+## CADD
+
+Is there CADD=Phred in addition to CADD_raw_Converted
+
+```{r}
+
+sum(is.na(SJRHB020.df$CADD_raw_Converted))
+hist(SJRHB020.df$CADD_raw_Converted)
+
+```
+
+# Miscellenious checks  
+
+Amino-Acid change: AA2 ?
+
+```{r}
+
+sum(is.na(SJRHB020.df$AA2))
+
+all_codes <- unique(SJRHB020.df$AA2)
+length(all_codes)
+
+SJRHB020.df %>% 
+  group_by(AA2) %>% 
+  summarise(Num_var=n()) %>% 
+  arrange(desc(Num_var)) %>% 
+  tail()
+
+rm(all_codes)
+
+```
+
+# Save data
+
+```{r}
+
+save.image("s02_explore_annotations.RData")
+
+```
+
+# Final section
+
+```{r}
+
+ls()
+sessionInfo()
+Sys.time()
+gc()
+
+```
+

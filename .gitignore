@@ -1,0 +1,14 @@
+# ignore everything
+*
+
+# but don't ignore files ending with slash = directories
+!*/
+
+# and don't ignore these files:
+!.gitignore
+!README.md
+
+!*.sh
+!*.log
+!*.Rmd
+!*.html

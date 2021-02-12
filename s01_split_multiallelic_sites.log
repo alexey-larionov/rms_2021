@@ -1,0 +1,30 @@
+Splitting multiallelic sites
+Started: 09Feb2021_18:56:25
+
+Source vcf
+/Users/alexey/Documents/mg/s2021/RMSzhang_SJRHB020/zhang_hg38.bwa.QC.vcf
+
+Split vcf
+/Users/alexey/Documents/mg/s2021/RMSzhang_SJRHB020/zhang_hg38.bwa.QC.split_MA.vcf
+
+Variant counts before splitting
+
+Number of samples: 30
+Number of SNPs:    226906
+Number of INDELs:  22141
+Number of MNPs:    0
+Number of others:  0
+Number of sites:   248487
+
+Splitting multiallelic sites ...
+
+Variant counts after splitting
+
+Number of samples: 30
+Number of SNPs:    227474
+Number of INDELs:  26291
+Number of MNPs:    0
+Number of others:  0
+Number of sites:   255078
+
+Done: 09Feb2021_18:56:33

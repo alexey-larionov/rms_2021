@@ -1,0 +1,289 @@
+---
+title: "Explore coordinates"
+author: "Alexey Larionov"
+date: "11 Feb 2021"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+editor_options:
+  chunk_output_type: console
+---
+
+# Summary
+
+Compare coordinates and coding in VCF and annotated files  
+
+# Start section
+
+<style>
+pre {
+  overflow-x: auto;
+}
+pre code {
+  word-wrap: normal;
+  white-space: pre;
+}
+</style>
+
+```{r echo=F}
+options(width = 999)
+```
+
+```{r}
+
+# Time stamp
+Sys.time()
+
+# Clenan-up
+rm(list=ls())
+graphics.off()
+
+# Memory
+gc()
+
+# Options
+options(stringsAsFactors=F)
+
+# Folders
+working_folder <- "/Users/alexey/Documents/mg/s2021/RMSzhang_SJRHB020"
+setwd(working_folder)
+
+# Libraries
+#library(dplyr)
+library(vcfR)
+
+```
+
+# Read annotated data
+
+```{r}
+
+SJRHB020.df <- read.table("RMSzhang_SJRHB020_hg38.bwa.QC.scores.filter.txt",
+                         header=T, sep = "\t", quote = "", na.strings="-9")
+
+dim(SJRHB020.df)
+colnames(SJRHB020.df)
+#str(SJRHB020.df,list.len = Inf)
+#head(SJRHB020.df)
+
+```
+
+# Explore variant with top BASS score
+
+Also: synonimous in No 11 and 15 ...
+Also, there are OR-s in No 3, 12 and 13 ...
+
+```{r}
+
+x <- !is.na(SJRHB020.df[1,])
+SJRHB020.df[1,x]
+#View(SJRHB020.df[1,x])
+rm(x)
+
+```
+
+# Read multisample VCF
+
+```{r}
+
+# Read vcf to vcfR object 
+multisample.vcfr <- read.vcfR("zhang_hg38.bwa.QC.split_MA.vcf", verbose=F) # verbose=F
+
+# Check result
+multisample.vcfr
+#head(multisample.vcfr)
+
+# Get list with data from VCF header and fixed/standard VCF columns
+meta_fix <- vcfR2tidy(multisample.vcfr, info_only=T)
+
+# Get data frame with variants information
+variants.df <- as.data.frame(meta_fix$fix)
+dim(variants.df)
+colnames(variants.df) 
+
+# Clean-up
+rm(meta_fix, multisample.vcfr)
+
+```
+
+# Compare variants coding 
+
+## SNP
+
+```{r}
+
+which(variants.df$POS==197421031)
+
+# Example of SNP
+SJRHB020.df[32,c("Chr","Start","End","Ref","Alt")]
+
+# Annotated position -1
+variants.df[38665,c("CHROM","POS","ID","REF","ALT")]
+
+```
+
+## Deletion
+
+VCF adds the ancoring nucleotide  
+Coordinate in VCF is -1 because it includes the ancor  
+
+```{r}
+
+# Example of Deletion
+SJRHB020.df[1,c("Chr","Start","End","Ref","Alt")]
+
+# Annotated position -1
+variants.df[variants.df$POS==52300416,c("CHROM","POS","ID","REF","ALT")]
+
+```
+
+## Insertion
+
+VCF keeps the ancoring nucleotide 
+Coordinate in VCF is the same as in the annotated text  
+
+```{r}
+
+# Example of Insertion
+SJRHB020.df[6,c("Chr","Start","End","Ref","Alt")]
+
+# Exact Annotated position
+variants.df[variants.df$POS==51346631,c("CHROM","POS","ID","REF","ALT")]
+
+```
+
+## Multi-nucleotide variants
+
+Need to be reported in a separate file and may need to be processed manually  
+e.g. ACT -> GG ?  
+
+# Variant types in multisample VCF
+
+## SNP/SNV-s
+
+```{r}
+
+SNP <- nchar(variants.df$REF)==1 & nchar(variants.df$ALT)==1
+sum(SNP)
+
+```
+
+## Deletions
+
+```{r}
+
+DEL <- nchar(variants.df$REF)>1 & nchar(variants.df$ALT)==1
+sum(DEL)
+
+```
+
+## Insertions
+
+```{r}
+
+INS <- nchar(variants.df$REF)==1 & nchar(variants.df$ALT)>1
+sum(INS)
+
+```
+
+## MNP/MNV-s
+
+```{r}
+
+MNV <- nchar(variants.df$REF)>1 & nchar(variants.df$ALT)>1
+sum(MNV)
+
+# Examples of MNV
+head(variants.df[MNV,c("CHROM","POS","ID","REF","ALT")])
+
+```
+
+## Check total count
+
+```{r}
+
+sum(SNP) + sum(DEL) + sum(INS) + sum(MNV)
+
+nrow(variants.df)
+
+rm(SNP,DEL,INS,MNV)
+
+```
+
+# Variant types in annotated text file
+
+## Check for absurd variants
+```{r}
+
+sum(SJRHB020.df$Ref=="-" & SJRHB020.df$Alt=="-")
+
+```
+
+## SNP/SNV-s
+
+```{r}
+
+SNP <- SJRHB020.df$Ref!="-" & SJRHB020.df$Alt!="-" & 
+  nchar(SJRHB020.df$Ref)==1 & nchar(SJRHB020.df$Alt)==1
+sum(SNP)
+
+```
+
+## Insertions
+
+```{r}
+
+INS <- SJRHB020.df$Ref=="-" & SJRHB020.df$Alt!="-"
+sum(INS)
+
+```
+
+## Deletions
+
+```{r}
+
+DEL <- SJRHB020.df$Ref!="-" & SJRHB020.df$Alt=="-"
+sum(DEL)
+
+```
+
+## MNP/MNV-s
+
+```{r}
+
+MNV <- SJRHB020.df$Ref!="-" & SJRHB020.df$Alt!="-" & 
+  (nchar(SJRHB020.df$Ref)!=1 | nchar(SJRHB020.df$Alt)!=1)
+sum(MNV)
+
+```
+
+## Check total count
+
+```{r}
+
+sum(SNP) + sum(INS) + sum(DEL)
+nrow(SJRHB020.df)
+
+rm(SNP,INS,DEL,MNV)
+
+```
+
+# Save data
+
+```{r}
+
+save.image("s03_explore_coordinates.RData")
+
+```
+
+# Final section
+
+```{r}
+
+ls()
+sessionInfo()
+Sys.time()
+gc()
+
+```
