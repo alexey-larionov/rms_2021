@@ -5,7 +5,10 @@ date: "12 Feb 2021"
 output:
   html_document:
     toc: true
-    toc_float: true
+    number_sections: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
 editor_options:
   chunk_output_type: console
 ---

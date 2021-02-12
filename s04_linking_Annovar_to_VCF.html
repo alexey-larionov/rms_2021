@@ -235,6 +235,12 @@ div.tocify {
   border-radius: 0px;
 }
 
+.tocify-subheader {
+  display: inline;
+}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em;
+}
 
 </style>
 
@@ -272,11 +278,11 @@ div.tocify {
 
 
 <div id="summary" class="section level1">
-<h1>Summary</h1>
+<h1><span class="header-section-number">1</span> Summary</h1>
 <p>Explore linking Annovar-coded variants to mulrisample VCF</p>
 </div>
 <div id="start-section" class="section level1">
-<h1>Start section</h1>
+<h1><span class="header-section-number">2</span> Start section</h1>
 <style>
 pre {
   overflow-x: auto;
@@ -288,7 +294,7 @@ pre code {
 </style>
 <pre class="r"><code># Time stamp
 Sys.time()</code></pre>
-<pre><code>## [1] &quot;2021-02-12 17:00:36 GMT&quot;</code></pre>
+<pre><code>## [1] &quot;2021-02-12 18:40:17 GMT&quot;</code></pre>
 <pre class="r"><code># Clenan-up
 rm(list=ls())
 graphics.off()
@@ -296,8 +302,8 @@ graphics.off()
 # Memory
 gc()</code></pre>
 <pre><code>##          used (Mb) gc trigger (Mb) limit (Mb) max used (Mb)
-## Ncells 414813 22.2     864400 46.2         NA   641560 34.3
-## Vcells 787718  6.1    8388608 64.0      16384  1768476 13.5</code></pre>
+## Ncells 414816 22.2     864408 46.2         NA   641560 34.3
+## Vcells 787742  6.1    8388608 64.0      16384  1768476 13.5</code></pre>
 <pre class="r"><code># Options
 options(stringsAsFactors=F)
 
@@ -363,9 +369,9 @@ library(BSgenome)</code></pre>
 #library(dplyr) # May interfere with many genomic packages !!!</code></pre>
 </div>
 <div id="read-data" class="section level1">
-<h1>Read data</h1>
+<h1><span class="header-section-number">3</span> Read data</h1>
 <div id="annotated-text-file" class="section level2">
-<h2>Annotated text file</h2>
+<h2><span class="header-section-number">3.1</span> Annotated text file</h2>
 <pre class="r"><code>SJRHB020.df &lt;- read.table(&quot;RMSzhang_SJRHB020_hg38.bwa.QC.scores.filter.txt&quot;,
                          header=T, sep = &quot;\t&quot;, quote = &quot;&quot;, na.strings=&quot;-9&quot;)
 
@@ -379,7 +385,7 @@ dim(SJRHB020.df)</code></pre>
 ##  [97] &quot;oncoKB_geneRole&quot;                       &quot;civic_variant_id&quot;                      &quot;Q&quot;                                     &quot;GQ&quot;                                    &quot;PL&quot;</code></pre>
 </div>
 <div id="multisample-vcf" class="section level2">
-<h2>Multisample VCF</h2>
+<h2><span class="header-section-number">3.2</span> Multisample VCF</h2>
 <pre class="r"><code># Read vcf to vcfR object 
 multisample.vcfr &lt;- read.vcfR(&quot;zhang_hg38.bwa.QC.split_MA.vcf&quot;, verbose=F) # verbose=F
 
@@ -421,7 +427,7 @@ variants.df[1:5,1:6]</code></pre>
 rm(meta_fix, multisample.vcfr, key)</code></pre>
 </div>
 <div id="reference-genome" class="section level2">
-<h2>Reference genome</h2>
+<h2><span class="header-section-number">3.3</span> Reference genome</h2>
 <p>Using a BSgenome data-package</p>
 <p>Alternatively the genome could be red directly from a FASTA file:<br />
 <a href="https://www.biostars.org/p/171577/" class="uri">https://www.biostars.org/p/171577/</a></p>
@@ -457,9 +463,9 @@ getSeq(b38,&quot;chr1&quot;,start=257894,end=257897)</code></pre>
 </div>
 </div>
 <div id="linking-variants" class="section level1">
-<h1>Linking variants</h1>
+<h1><span class="header-section-number">4</span> Linking variants</h1>
 <div id="snp" class="section level2">
-<h2>SNP</h2>
+<h2><span class="header-section-number">4.1</span> SNP</h2>
 <ul>
 <li>VCF.Chr = Annovar.Chr<br />
 </li>
@@ -503,7 +509,7 @@ if(vcf_key %in% variants.df$key){
 rm(annovar.snp,vcf.snp,vcf.snp.chr,vcf.snp.pos,vcf.snp.ref,vcf.snp.alt,vcf_key)</code></pre>
 </div>
 <div id="deletion" class="section level2">
-<h2>Deletion</h2>
+<h2><span class="header-section-number">4.2</span> Deletion</h2>
 <ul>
 <li>VCF.Chr = Annovar.Chr<br />
 </li>
@@ -555,7 +561,7 @@ if(vcf_key %in% variants.df$key){
 rm(annovar.del,vcf.del,vcf.del.chr,vcf.del.pos,vcf.del.ref,vcf.del.alt,vcf_key)</code></pre>
 </div>
 <div id="insertion" class="section level2">
-<h2>Insertion</h2>
+<h2><span class="header-section-number">4.3</span> Insertion</h2>
 <ul>
 <li>VCF.Chr = Annovar.Chr<br />
 </li>
@@ -605,7 +611,7 @@ rm(annovar.ins,vcf.ins,vcf.ins.chr,vcf.ins.pos,vcf.ins.ref,vcf.ins.alt,vcf_key)<
 </div>
 </div>
 <div id="count-types-of-variants" class="section level1">
-<h1>Count types of variants</h1>
+<h1><span class="header-section-number">5</span> Count types of variants</h1>
 <p>Count SNP, DEL and INS variants. Check if any variants fall out of these categories: so they should be linked manually.</p>
 <pre class="r"><code># Count SNP/SNV-s
 SNP &lt;- SJRHB020.df$Ref!=&quot;-&quot; &amp; SJRHB020.df$Alt!=&quot;-&quot; &amp; 
@@ -643,11 +649,11 @@ if(sum(ABSV)&gt;0){
 rm(ABSV,SNP,INS,DEL,MNV)</code></pre>
 </div>
 <div id="save-data" class="section level1">
-<h1>Save data</h1>
+<h1><span class="header-section-number">6</span> Save data</h1>
 <pre class="r"><code>save.image(&quot;s04_linking_Annovar_to_VCF.RData&quot;)</code></pre>
 </div>
 <div id="final-section" class="section level1">
-<h1>Final section</h1>
+<h1><span class="header-section-number">7</span> Final section</h1>
 <pre class="r"><code>ls()</code></pre>
 <pre><code>## [1] &quot;b38&quot;            &quot;SJRHB020.df&quot;    &quot;variants.df&quot;    &quot;working_folder&quot;</code></pre>
 <pre class="r"><code>sessionInfo()</code></pre>
@@ -672,11 +678,11 @@ rm(ABSV,SNP,INS,DEL,MNV)</code></pre>
 ##  [1] SummarizedExperiment_1.16.1 tidyselect_1.1.0            xfun_0.21                   purrr_0.3.4                 memuse_4.1-0                splines_3.6.2               lattice_0.20-41             generics_0.1.0              vctrs_0.3.6                 htmltools_0.5.1.1           viridisLite_0.3.0           yaml_2.2.1                  mgcv_1.8-33                 XML_3.99-0.3                rlang_0.4.10                pillar_1.4.7                DBI_1.1.1                   glue_1.4.2                  BiocParallel_1.20.1         matrixStats_0.58.0          GenomeInfoDbData_1.2.2      lifecycle_0.2.0             stringr_1.4.0               zlibbioc_1.32.0             evaluate_0.14               Biobase_2.46.0              knitr_1.31                  permute_0.9-5               Rcpp_1.0.6                  pinfsc50_1.2.0              DelayedArray_0.12.3         vegan_2.5-7                 Rsamtools_2.2.3             digest_0.6.27               stringi_1.5.3              
 ## [36] dplyr_1.0.4                 grid_3.6.2                  tools_3.6.2                 bitops_1.0-6                magrittr_2.0.1              RCurl_1.98-1.2              tibble_3.0.6                cluster_2.1.0               crayon_1.4.1                ape_5.4-1                   pkgconfig_2.0.3             MASS_7.3-53                 ellipsis_0.3.1              Matrix_1.3-2                assertthat_0.2.1            rmarkdown_2.6               R6_2.5.0                    GenomicAlignments_1.22.1    nlme_3.1-152                compiler_3.6.2</code></pre>
 <pre class="r"><code>Sys.time()</code></pre>
-<pre><code>## [1] &quot;2021-02-12 17:01:22 GMT&quot;</code></pre>
+<pre><code>## [1] &quot;2021-02-12 18:41:00 GMT&quot;</code></pre>
 <pre class="r"><code>gc()</code></pre>
 <pre><code>##            used  (Mb) gc trigger  (Mb) limit (Mb) max used  (Mb)
-## Ncells  7907203 422.3   17339982 926.1         NA 17339982 926.1
-## Vcells 28150099 214.8   84107998 641.7      16384 69930265 533.6</code></pre>
+## Ncells  7907206 422.3   17339987 926.1         NA 17339987 926.1
+## Vcells 28150123 214.8   84108039 641.7      16384 69930289 533.6</code></pre>
 </div>
 
 
@@ -734,8 +740,8 @@ $(document).ready(function ()  {
       ignoreSelector: ".toc-ignore",
       scrollTo: 0
     };
-    options.showAndHide = true;
-    options.smoothScroll = true;
+    options.showAndHide = false;
+    options.smoothScroll = false;
 
     // tocify
     var toc = $("#TOC").tocify(options).data("toc-tocify");
