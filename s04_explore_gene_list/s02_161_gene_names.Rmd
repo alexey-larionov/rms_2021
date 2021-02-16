@@ -1,0 +1,173 @@
+---
+title: "Check 161 gene symbols against Entrez ID-s in **org.Hs.eg.db** database"
+author: "Alexey Larionov"
+date: "16 Feb 2021"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
+editor_options:
+  chunk_output_type: console
+---
+
+# Summary
+
+Explore 161 gene names  
+
+# Start section
+
+<style>
+pre {
+  overflow-x: auto;
+}
+pre code {
+  word-wrap: normal;
+  white-space: pre;
+}
+</style>
+
+```{r echo=F}
+options(width = 999)
+```
+
+```{r}
+
+# Time stamp
+Sys.time()
+
+# Clenan-up
+rm(list=ls())
+graphics.off()
+
+# Memory
+gc()
+
+# Options
+options(stringsAsFactors=F)
+
+# Files and folders
+base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests"
+working_folder=file.path(base_folder,"s04_explore_gene_list")
+setwd(working_folder)
+
+# This database package contains multiple gene-related ID-s including Entrez-ids and gene Symbols
+#BiocManager::install("org.Hs.eg.db")
+library(org.Hs.eg.db)
+
+```
+
+# Get all Entrez-ID-s & Symbols
+
+```{r}
+
+# Connect to the database with entrez ids and gene symbols
+entrez_hs <- org.Hs.eg.db
+entrez_hs
+columns(entrez_hs)
+
+# Select required data
+#?select / help('select') / ?AnnotationDbi::select
+entrez2symbols.df <- select(entrez_hs,
+            keys=keys(entrez_hs,"ENTREZID"),
+            columns=c("SYMBOL","ENTREZID"),
+            keytype="ENTREZID")
+
+dim(entrez2symbols.df)
+head(entrez2symbols.df)
+
+# Check missed data
+sum(is.na(entrez2symbols.df))
+
+# Clean-up
+rm(entrez_hs)
+
+```
+
+# Check 161 genes
+
+## Read gene list
+
+```{r}
+
+data_file=file.path(base_folder,"d04_gene_lists","rms_genes_161.txt")
+genes_161 <- scan(data_file,what="character")
+genes_161
+
+rm(data_file)
+
+```
+
+## Check missed genes
+
+No gene symbols from our list are missed in **org.Hs.eg.db** database  
+
+```{r}
+
+# Count genes from our list are present in the SYMBOL-s
+sum(genes_161 %in% entrez2symbols.df$SYMBOL)
+
+# Show genes from our list are absent in the SYMBOL-s
+genes_161[! genes_161 %in% entrez2symbols.df$SYMBOL]
+
+```
+
+## Check duplicated symbols
+
+No symbols **from our list** are duplicated in the SYMBOL field in **org.Hs.eg.db** database  
+
+```{r}
+
+# A small number of Symbols is duplicated in **org.Hs.eg.db** database
+sum(duplicated(entrez2symbols.df$SYMBOL))
+
+# None of Symbols for our genes is duplicaed
+x <- entrez2symbols.df$SYMBOL %in% genes_161
+y <- entrez2symbols.df$SYMBOL[x]
+sum(duplicated(y))
+
+# Clean-up
+rm(x,y)
+
+```
+
+# Entrez ID-s for 161 genes
+
+```{r}
+
+# Select genes
+genes_161.df <- entrez2symbols.df[entrez2symbols.df$SYMBOL %in% genes_161,]
+rownames(genes_161.df) <- genes_161.df$ENTREZID
+
+# Check result
+dim(genes_161.df)
+head(genes_161.df)
+
+sum(duplicated(genes_161.df$ENTREZID))
+sum(duplicated(genes_161.df$ENTREZID))
+
+# Clean-up
+rm(entrez2symbols.df, genes_161)
+
+```
+
+# Save data
+
+```{r}
+
+save.image("s02_161_gene_names.RData")
+
+```
+
+# Final section
+
+```{r}
+
+ls()
+sessionInfo()
+Sys.time()
+gc()
+
+```

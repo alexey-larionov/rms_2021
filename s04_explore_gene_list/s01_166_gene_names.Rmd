@@ -1,5 +1,5 @@
 ---
-title: "Check gene symbols against Entrez ID-s in **org.Hs.eg.db** database"
+title: "Check 166 gene symbols against Entrez ID-s in **org.Hs.eg.db** database"
 author: "Alexey Larionov"
 date: "16 Feb 2021"
 output:
@@ -15,7 +15,7 @@ editor_options:
 
 # Summary
 
-Explore gene names  
+Explore 166 gene names  
 
 # Start section
 
@@ -30,7 +30,7 @@ pre code {
 </style>
 
 ```{r echo=F}
-#options(width = 999)
+options(width = 999)
 ```
 
 ```{r}
@@ -139,7 +139,7 @@ rm(x,y)
 
 ```{r}
 
-save.image("s01_explore_gene_names.RData")
+save.image("s01_166_gene_names.RData")
 
 ```
 
