@@ -294,7 +294,7 @@ pre code {
 </style>
 <pre class="r"><code># Time stamp
 Sys.time()</code></pre>
-<pre><code>## [1] &quot;2021-02-16 20:25:39 GMT&quot;</code></pre>
+<pre><code>## [1] &quot;2021-02-17 13:02:28 GMT&quot;</code></pre>
 <pre class="r"><code># Clenan-up
 rm(list=ls())
 graphics.off()
@@ -302,8 +302,8 @@ graphics.off()
 # Memory
 gc()</code></pre>
 <pre><code>##          used (Mb) gc trigger (Mb) limit (Mb) max used (Mb)
-## Ncells 414594 22.2     863795 46.2         NA   641517 34.3
-## Vcells 785946  6.0    8388608 64.0      16384  1768567 13.5</code></pre>
+## Ncells 414608 22.2     863835 46.2         NA   641517 34.3
+## Vcells 786150  6.0    8388608 64.0      16384  1768567 13.5</code></pre>
 <pre class="r"><code># Options
 options(stringsAsFactors=F)
 
@@ -391,7 +391,57 @@ b38.tx</code></pre>
 <pre><code>##  [1] &quot;chr1&quot;                   &quot;chr2&quot;                   &quot;chr3&quot;                   &quot;chr4&quot;                   &quot;chr5&quot;                   &quot;chr6&quot;                   &quot;chr7&quot;                   &quot;chr8&quot;                   &quot;chr9&quot;                   &quot;chr10&quot;                  &quot;chr11&quot;                  &quot;chr12&quot;                  &quot;chr13&quot;                  &quot;chr14&quot;                  &quot;chr15&quot;                  &quot;chr16&quot;                  &quot;chr17&quot;                  &quot;chr18&quot;                  &quot;chr19&quot;                  &quot;chr20&quot;                  &quot;chr21&quot;                  &quot;chr22&quot;                  &quot;chrX&quot;                   &quot;chrY&quot;                   &quot;chrM&quot;                   &quot;chr1_GL383518v1_alt&quot;    &quot;chr1_GL383519v1_alt&quot;    &quot;chr1_GL383520v2_alt&quot;    &quot;chr1_KI270706v1_random&quot; &quot;chr1_KI270707v1_random&quot;</code></pre>
 <pre class="r"><code>columns(b38.tx)</code></pre>
 <pre><code>##  [1] &quot;CDSCHROM&quot;   &quot;CDSEND&quot;     &quot;CDSID&quot;      &quot;CDSNAME&quot;    &quot;CDSPHASE&quot;   &quot;CDSSTART&quot;   &quot;CDSSTRAND&quot;  &quot;EXONCHROM&quot;  &quot;EXONEND&quot;    &quot;EXONID&quot;     &quot;EXONNAME&quot;   &quot;EXONRANK&quot;   &quot;EXONSTART&quot;  &quot;EXONSTRAND&quot; &quot;GENEID&quot;     &quot;TXCHROM&quot;    &quot;TXEND&quot;      &quot;TXID&quot;       &quot;TXNAME&quot;     &quot;TXSTART&quot;    &quot;TXSTRAND&quot;   &quot;TXTYPE&quot;</code></pre>
-<pre class="r"><code># Set of canonical chromosomes 
+<pre class="r"><code># Default genes() setting prevent showing genes with multiple locations in genome
+# i.e. located in canonical and in Alt loci (see ?genes)
+genes_152.gr &lt;- genes(b38.tx, 
+                      filter=list(gene_id = genes_161.df$ENTREZID))
+genes_152.gr</code></pre>
+<pre><code>## GRanges object with 152 ranges and 1 metadata column:
+##         seqnames              ranges strand |     gene_id
+##            &lt;Rle&gt;           &lt;IRanges&gt;  &lt;Rle&gt; | &lt;character&gt;
+##   10019    chr12 111405948-111451623      + |       10019
+##   10165     chr7   96120220-96322147      - |       10165
+##    1019    chr12   57747727-57756013      - |        1019
+##    1027    chr12   12715058-12722369      + |        1027
+##    1029     chr9   21967753-21995301      - |        1029
+##     ...      ...                 ...    ... .         ...
+##    8929     chr4   41744082-41748970      - |        8929
+##    9319     chr5       892884-919357      + |        9319
+##    9401     chr8 144511288-144517845      - |        9401
+##    9702    chr11   95789965-95832693      + |        9702
+##     999    chr16   68737292-68835541      + |         999
+##   -------
+##   seqinfo: 595 sequences (1 circular) from hg38 genome</code></pre>
+<pre class="r"><code># If we suppress the dafult, we have all genes, but the output is in the LIST of genomic ranges
+genes_161.grl &lt;- genes(b38.tx, 
+                       filter=list(gene_id = genes_161.df$ENTREZID), 
+                       single.strand.genes.only=F)
+
+# Example of a gene that is located on two &quot;strands&quot; i.e. in canonical chromosome and on an Alt loci
+genes_161.grl[5] </code></pre>
+<pre><code>## GRangesList object of length 1:
+## $`1028`
+## GRanges object with 2 ranges and 0 metadata columns:
+##                   seqnames          ranges strand
+##                      &lt;Rle&gt;       &lt;IRanges&gt;  &lt;Rle&gt;
+##   [1]                chr11 2883213-2885773      -
+##   [2] chr11_KI270831v1_alt   115392-118091      -
+##   -------
+##   seqinfo: 595 sequences (1 circular) from hg38 genome</code></pre>
+<pre class="r"><code># Genes with Alt Loci: may need different processing to embrace all b38 complexity/richness
+x &lt;- names(which(lapply(genes_161.grl,length)&gt;1)) # Entres ID
+genes_161.df[genes_161.df$ENTREZID %in% x,]</code></pre>
+<pre><code>##      ENTREZID   SYMBOL
+## 1028     1028   CDKN1C
+## 1991     1991    ELANE
+## 2629     2629      GBA
+## 3265     3265     HRAS
+## 5265     5265 SERPINA1
+## 5644     5644    PRSS1
+## 5728     5728     PTEN
+## 6598     6598  SMARCB1
+## 8647     8647   ABCB11</code></pre>
+<pre class="r"><code># Set of canonical chromosomes for future filtering
 # (to avoid gene versions annotated to Alt loci)
 chromosomes &lt;- c(&quot;chr1&quot;,&quot;chr2&quot;,&quot;chr3&quot;,&quot;chr4&quot;,&quot;chr5&quot;,
                  &quot;chr6&quot;,&quot;chr7&quot;,&quot;chr8&quot;,&quot;chr9&quot;,&quot;chr10&quot;,
@@ -402,7 +452,7 @@ chromosomes &lt;- c(&quot;chr1&quot;,&quot;chr2&quot;,&quot;chr3&quot;,&quot;chr
 # Select gene coordinates 
 # (use coordinates on canonical chromosomes only)
 genes_161.gr &lt;- genes(b38.tx, 
-                       filter=list(gene_id=genes_161.df$ENTREZID, 
+                       filter=list(gene_id = genes_161.df$ENTREZID, 
                                    tx_chrom = chromosomes))
 
 # Sort by position
@@ -427,7 +477,7 @@ genes_161.gr</code></pre>
 ##   -------
 ##   seqinfo: 595 sequences (1 circular) from hg38 genome</code></pre>
 <pre class="r"><code># Clean-up
-rm(b38.tx, chromosomes)</code></pre>
+rm(b38.tx, chromosomes, x, genes_152.gr, genes_161.grl)</code></pre>
 </div>
 <div id="add-symbols" class="section level1">
 <h1><span class="header-section-number">5</span> Add symbols</h1>
@@ -504,11 +554,11 @@ rm(genes_161.df)</code></pre>
 ##  [1] Rcpp_1.0.6                  lattice_0.20-41             prettyunits_1.1.1           Rsamtools_2.2.3             Biostrings_2.54.0           assertthat_0.2.1            digest_0.6.27               BiocFileCache_1.10.2        R6_2.5.0                    RSQLite_2.2.3               evaluate_0.14               httr_1.4.2                  pillar_1.4.7                zlibbioc_1.32.0             rlang_0.4.10                progress_1.2.2              curl_4.3                    blob_1.2.1                  Matrix_1.3-2                rmarkdown_2.6               BiocParallel_1.20.1         stringr_1.4.0               RCurl_1.98-1.2              bit_4.0.4                   biomaRt_2.42.1              DelayedArray_0.12.3         compiler_3.6.2              rtracklayer_1.46.0          xfun_0.21                   pkgconfig_2.0.3             askpass_1.1                 htmltools_0.5.1.1           openssl_1.4.3               tidyselect_1.1.0            SummarizedExperiment_1.16.1
 ## [36] tibble_3.0.6                GenomeInfoDbData_1.2.2      matrixStats_0.58.0          XML_3.99-0.3                crayon_1.4.1                dplyr_1.0.4                 dbplyr_2.1.0                GenomicAlignments_1.22.1    bitops_1.0-6                rappdirs_0.3.3              grid_3.6.2                  lifecycle_1.0.0             DBI_1.1.1                   magrittr_2.0.1              stringi_1.5.3               cachem_1.0.4                XVector_0.26.0              ellipsis_0.3.1              generics_0.1.0              vctrs_0.3.6                 tools_3.6.2                 bit64_4.0.5                 glue_1.4.2                  purrr_0.3.4                 hms_1.0.0                   fastmap_1.1.0               yaml_2.2.1                  memoise_2.0.0               knitr_1.31</code></pre>
 <pre class="r"><code>Sys.time()</code></pre>
-<pre><code>## [1] &quot;2021-02-16 20:25:47 GMT&quot;</code></pre>
+<pre><code>## [1] &quot;2021-02-17 13:02:44 GMT&quot;</code></pre>
 <pre class="r"><code>gc()</code></pre>
 <pre><code>##            used  (Mb) gc trigger  (Mb) limit (Mb) max used  (Mb)
-## Ncells  7095939 379.0   12974260 693.0         NA  9353096 499.6
-## Vcells 12254753  93.5   19639533 149.9      16384 16299328 124.4</code></pre>
+## Ncells  7098311 379.1   13126090 701.1         NA 13126090 701.1
+## Vcells 12261197  93.6   19852301 151.5      16384 16476911 125.8</code></pre>
 </div>
 
 

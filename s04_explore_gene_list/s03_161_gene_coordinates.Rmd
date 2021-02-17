@@ -86,7 +86,25 @@ length(seqlevels(b38.tx))
 seqlevels(b38.tx)[1:30]
 columns(b38.tx)
 
-# Set of canonical chromosomes 
+# Default genes() setting prevent showing genes with multiple locations in genome
+# i.e. located in canonical and in Alt loci (see ?genes)
+genes_152.gr <- genes(b38.tx, 
+                      filter=list(gene_id = genes_161.df$ENTREZID))
+genes_152.gr
+
+# If we suppress the dafult, we have all genes, but the output is in the LIST of genomic ranges
+genes_161.grl <- genes(b38.tx, 
+                       filter=list(gene_id = genes_161.df$ENTREZID), 
+                       single.strand.genes.only=F)
+
+# Example of a gene that is located on two "strands" i.e. in canonical chromosome and on an Alt loci
+genes_161.grl[5] 
+
+# Genes with Alt Loci: may need different processing to embrace all b38 complexity/richness
+x <- names(which(lapply(genes_161.grl,length)>1)) # Entres ID
+genes_161.df[genes_161.df$ENTREZID %in% x,]
+
+# Set of canonical chromosomes for future filtering
 # (to avoid gene versions annotated to Alt loci)
 chromosomes <- c("chr1","chr2","chr3","chr4","chr5",
                  "chr6","chr7","chr8","chr9","chr10",
@@ -97,7 +115,7 @@ chromosomes <- c("chr1","chr2","chr3","chr4","chr5",
 # Select gene coordinates 
 # (use coordinates on canonical chromosomes only)
 genes_161.gr <- genes(b38.tx, 
-                       filter=list(gene_id=genes_161.df$ENTREZID, 
+                       filter=list(gene_id = genes_161.df$ENTREZID, 
                                    tx_chrom = chromosomes))
 
 # Sort by position
@@ -107,7 +125,7 @@ genes_161.gr <- sort(genes_161.gr)
 genes_161.gr
 
 # Clean-up
-rm(b38.tx, chromosomes)
+rm(b38.tx, chromosomes, x, genes_152.gr, genes_161.grl)
 
 ```
 
