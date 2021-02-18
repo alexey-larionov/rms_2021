@@ -9,8 +9,6 @@
 !README.md
 
 !*.sh
-!*.log
+!s0*.log
 !*.Rmd
 !*.html
-
-zhang_hg38.bwa.QC.split_MA.log

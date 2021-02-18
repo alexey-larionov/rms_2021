@@ -50,7 +50,7 @@ options(stringsAsFactors=F)
 
 # Files and folders
 base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests"
-working_folder=file.path(base_folder,"s04_explore_gene_list")
+working_folder=file.path(base_folder,"s05_select_variants")
 setwd(working_folder)
 
 # Libraries
@@ -121,7 +121,7 @@ rm(data_folder,data_file,data.df,chromosomes)
 
 ```{r}
 
-save.image("s04_read_annotated_txt_to_granges.RData")
+save.image("s01_read_annotated_txt_to_granges.RData")
 
 ```
 
