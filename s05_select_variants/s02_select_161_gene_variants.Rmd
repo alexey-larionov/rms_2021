@@ -68,6 +68,7 @@ base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests"
 working_folder=file.path(base_folder,"s05_select_variants")
 
 ls()
+genes_161.gr
 
 ```
 
@@ -80,6 +81,8 @@ base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests"
 working_folder=file.path(base_folder,"s05_select_variants")
 
 ls()
+summary(data.gr)
+data.gr[,1:3]
 
 # Explore metadata
 names(data.gr@elementMetadata)
