@@ -67,6 +67,15 @@ library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 
 ```
 
+# Read 161 genes
+
+```{r}
+
+load(file.path(working_folder,"s03_161_gene_coordinates.RData"))
+
+```
+
+
 # Read 166 genes
 
 ```{r}

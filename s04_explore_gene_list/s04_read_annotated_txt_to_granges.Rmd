@@ -1,0 +1,137 @@
+---
+title: "Read annotated text files to GRanges"
+author: "Alexey Larionov"
+date: "18 Feb 2021"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float: 
+      collapsed: false
+editor_options:
+  chunk_output_type: console
+---
+
+# Summary
+
+Read annotated text file to GRanges   
+The file should include Chr, Start and End columns  
+
+# Start section
+
+<style>
+pre {
+  overflow-x: auto;
+}
+pre code {
+  word-wrap: normal;
+  white-space: pre;
+}
+</style>
+
+```{r echo=F}
+options(width = 999)
+```
+
+```{r}
+
+# Time stamp
+Sys.time()
+
+# Clenan-up
+rm(list=ls())
+graphics.off()
+
+# Memory
+gc()
+
+# Options
+options(stringsAsFactors=F)
+
+# Files and folders
+base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests"
+working_folder=file.path(base_folder,"s04_explore_gene_list")
+setwd(working_folder)
+
+# Libraries
+library(GenomicRanges)
+
+# Here this data package is used to provide seqinfo only. 
+# However, it also contains the whole human genome sequence, which may be accessed if necessary
+#b38 <- getBSgenome("BSgenome.Hsapiens.NCBI.GRCh38")
+#library(BSgenome)
+#b38 <- getBSgenome("BSgenome.Hsapiens.UCSC.hg38")
+
+# Sequence / chromosome names
+#b38@seqinfo
+
+```
+
+# Read annotated text file
+
+```{r}
+
+# Read text file to data frame
+data_folder=file.path(base_folder,"d03_germline_annotated_files")
+data_file=file.path(data_folder,"RMSzhang_SJRHB020_hg38.bwa.QC.scores.filter.txt")
+data.df <- read.table(data_file, header=T, sep = "\t", quote = "", na.strings="-9")
+dim(data.df)
+
+# Convert data frame to GR
+# The data frame should be compartible with GR format 
+# i.e. it should include Chr, Start and End columns 
+data.gr <- GRanges(data.df)
+summary(data.gr)
+data.df[1:5,1:6]
+data.gr[1:5,1:3]
+
+# Sort GRanges
+data.gr <- sort(data.gr)
+data.gr[1:5,1:3]
+
+# Explore Seqnames
+seqinfo(data.gr)
+data.gr@seqnames # Note using @ instead of $ !!!
+
+# Set of canonical chromosomes for future filtering
+# (to avoid variants versions annotated to Alt loci)
+chromosomes <- c("chr1","chr2","chr3","chr4","chr5",
+                 "chr6","chr7","chr8","chr9","chr10",
+                 "chr11","chr12","chr13","chr14","chr15",
+                 "chr16","chr17","chr18","chr19","chr20",
+                 "chr21","chr22","chrX","chrY","chrM")
+
+# Look at variants outside of canonical chromosomes
+data.gr[!data.gr@seqnames %in%  chromosomes, 1:2]
+
+# Keep only variants on canonical chromosomes
+data.gr <- data.gr[data.gr@seqnames %in%  chromosomes,]
+summary(data.gr)
+
+# Explore Seqnames
+seqinfo(data.gr)
+data.gr@seqnames
+
+# Clean-up
+rm(data_folder,data_file,data.df,chromosomes)
+
+```
+
+# Save data
+
+```{r}
+
+save.image("s04_read_annotated_txt_to_granges.RData")
+
+```
+
+# Final section
+
+```{r}
+
+ls()
+sessionInfo()
+Sys.time()
+gc()
+
+```
