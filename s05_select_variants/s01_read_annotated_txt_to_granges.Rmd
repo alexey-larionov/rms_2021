@@ -56,15 +56,6 @@ setwd(working_folder)
 # Libraries
 library(GenomicRanges)
 
-# Here this data package is used to provide seqinfo only. 
-# However, it also contains the whole human genome sequence, which may be accessed if necessary
-#b38 <- getBSgenome("BSgenome.Hsapiens.NCBI.GRCh38")
-#library(BSgenome)
-#b38 <- getBSgenome("BSgenome.Hsapiens.UCSC.hg38")
-
-# Sequence / chromosome names
-#b38@seqinfo
-
 ```
 
 # Read annotated text file
@@ -80,6 +71,7 @@ dim(data.df)
 # Convert data frame to GR
 # The data frame should be compartible with GR format 
 # i.e. it should include Chr, Start and End columns 
+# Also see ?makeGRangesFromDataFrame 
 data.gr <- GRanges(data.df)
 summary(data.gr)
 data.df[1:5,1:6]
@@ -112,8 +104,16 @@ summary(data.gr)
 seqinfo(data.gr)
 data.gr@seqnames
 
+# Explore metadata
+names(data.gr@elementMetadata)
+
+# GRange can be converted to data frame
+x.df <- as.data.frame(data.gr)
+dim(x.df)
+head(x.df[,1:9])
+
 # Clean-up
-rm(data_folder,data_file,data.df,chromosomes)
+rm(data_folder,data_file,data.df,chromosomes, x.df)
 
 ```
 

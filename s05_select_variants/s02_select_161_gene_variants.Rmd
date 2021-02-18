@@ -1,14 +1,13 @@
 ---
-title: "Check gene symbols against Entrez ID-s in **org.Hs.eg.db** database"
+title: "Get overlap of GRanges keeping metadata"
 author: "Alexey Larionov"
-date: "16 Feb 2021"
+date: "18 Feb 2021"
 output:
   html_document:
     toc: true
     number_sections: true
     toc_float: 
       collapsed: false
-      smooth_scroll: false
 editor_options:
   chunk_output_type: console
 ---
@@ -50,163 +49,107 @@ options(stringsAsFactors=F)
 
 # Files and folders
 base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests"
-working_folder=file.path(base_folder,"s04_explore_gene_coordinates")
+working_folder=file.path(base_folder,"s05_select_variants")
 setwd(working_folder)
 
 # Libraries
 library(GenomicRanges)
 
-# This database package is used to link entrez-ids to gene symbols
-#BiocManager::install("org.Hs.eg.db")
-library(org.Hs.eg.db)
-
-# This database package is used to retrieve coordinates of human exones/genes
-# The genes are given by entrez-ids
-#BiocManager::install("TxDb.Hsapiens.UCSC.hg38.knownGene")
-library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-
 ```
 
-# Read 161 genes
+# Read GRanges
+
+## 161 genes
 
 ```{r}
 
-load(file.path(working_folder,"s03_161_gene_coordinates.RData"))
+load(file.path(base_folder,"s04_explore_gene_list","s03_161_gene_coordinates.RData"))
+base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests"
+working_folder=file.path(base_folder,"s05_select_variants")
+
+ls()
 
 ```
 
-
-# Read 166 genes
+## Annotated variants
 
 ```{r}
 
-data_file=file.path(base_folder,"d04_gene_lists","rms_genes_166.txt")
-genes_166 <- scan(data_file,what="character")
-genes_166
+load(file.path(working_folder,"s01_read_annotated_txt_to_granges.RData"))
+base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests"
+working_folder=file.path(base_folder,"s05_select_variants")
 
-rm(data_file)
+ls()
+
+# Explore metadata
+names(data.gr@elementMetadata)
 
 ```
 
-# Get ENTREZID  
+# Select variants in 161 genes
 
-## Entrez-ID to Gene-Symbol mapping
+## Example of GR subset by overlap
+
+Taken from ?subsetByOverlaps
 
 ```{r}
 
-# Connect to database with entrez ids and gene symbols
-entrez_hs <- org.Hs.eg.db
-entrez_hs
-columns(entrez_hs)
+# Make toy GRanges
+gr <- GRanges(
+        seqnames=Rle(c("chr1", "chr2", "chr1", "chr3"), c(1, 3, 2, 4)),
+        ranges=IRanges(1:10, width=10:1, names=head(letters,10)),
+        strand=Rle(strand(c("-", "+", "*", "+", "-")), c(1, 2, 2, 3, 2)),
+        score=1:10,
+        GC=seq(1, 0, length=10)
+      )
 
-#?select / help('select')
-#?AnnotationDbi::select
-entrez2symbols.df <- select(entrez_hs,
-            keys=keys(entrez_hs,"ENTREZID"),
-            columns=c("SYMBOL","ENTREZID"),
-            keytype="ENTREZID")
+gr1 <- GRanges(seqnames="chr2", ranges=IRanges(4:3, 6),
+               strand="+", score=5:4, GC=0.45)
 
-head(entrez2symbols.df)
+# Get gr elements that overlap with gr1
+gr
+gr1
+subsetByOverlaps(gr, gr1)
 
-# No missed data
-sum(is.na(entrez2symbols.df))
+# Clean-up
+rm(gr,gr1)
 
 ```
 
-## Some missed genes
-
-Some symbols from our list are missed in the SYMBOL field in **org.Hs.eg.db** database.  
-
-This couls happen because  
-
-- our list uses **Alias** instead of the current official Symbol  
-- there is a **typo** in the symbol in our list  
+## Variants overlapping 161 genes
 
 ```{r}
 
-# Count genes from our list are present in the SYMBOL-s
-sum(genes_166 %in% entrez2symbols.df$SYMBOL)
+# Get variants by overlap (see details in ?subsetByOverlaps)
+variants_161_genes.gr <- subsetByOverlaps(data.gr, genes_161.gr)
 
-# Show genes from our list are absent in the SYMBOL-s
-genes_166[! genes_166 %in% entrez2symbols.df$SYMBOL]
+# Explore result
+summary(variants_161_genes.gr)
+
+options(showHeadLines=500)
+options(showTailLines=500)
+variants_161_genes.gr[,c("Gene.refGene","Func.refGene","ExonicFunc.refGene")]
+options(showHeadLines=NULL)
+options(showTailLines=NULL)
+
+# Clean-up
+rm(data.gr,genes_161.gr)
 
 ```
-
-## No duplicated genes
-
-No symbols from our list are duplicated in the SYMBOL field in **org.Hs.eg.db** database  
 
 ```{r}
 
-x <- entrez2symbols.df$SYMBOL %in% genes_166
-y <- entrez2symbols.df$SYMBOL[x]
-sum(duplicated(y))
-
-genes_970.df <- entrez2symbols.df[x,]
-
-# 191 genes where present at lerast in Alias
-x <- entrez2symbols.df$ALIAS %in% genes_166
-sum(x)
-genes_191.df <- entrez2symbols.df[x,]
-
-# Check duplicated symbols (NOT aliases!)
-dup_index <- duplicated(genes_191.df$SYMBOL)
-dup_symbol <- unique(genes_191.df$SYMBOL[dup_index])
-length(dup_symbol)
-
-ds <- genes_191.df$SYMBOL[genes_191.df$SYMBOL %in% dup_symbol]
-ds
-dup_symbols.df <- genes_191.df[genes_191.df$SYMBOL %in% dup_symbol,]
-
-#dup_alias <- duplicated(genes_191.df$ALIAS)
-
-dup_genes.df <- genes_191.df[dup_symbol | dup_alias,]
-
-dup_genes.df[order(dup_genes.df$ALIAS),]
-
+save.image("s02_select_161_gene_variants.RData")
 
 ```
 
-# Get genes coordinates
+# Final section
 
 ```{r}
 
-b38.tx <- TxDb.Hsapiens.UCSC.hg38.knownGene
-
-b38.tx
-length(seqlevels(b38.tx))
-columns(b38.tx)
-
-b38.genes <- genes(b38.tx)
-length(b38.genes)
-head(b38.genes)
-
-cols <- "SYMBOL"
-keys <- na.omit(names(b38.genes))
-length(names(b38.genes))
-length(na.omit(names(b38.genes)))
-
-
+ls()
+sessionInfo()
+Sys.time()
+gc()
 
 ```
-
-# Annotated text file
-
-```{r}
-
-data_folder=file.path(base_folder,"d03_germline_annotated_files")
-data_file=file.path(data_folder,"RMSzhang_SJRHB020_hg38.bwa.QC.scores.filter.txt")
-
-data.df <- read.table(data_file, header=T, sep = "\t", quote = "", na.strings="-9")
-data.gr <- GRanges(data.df)
-
-data.df[1:5,1:6]
-data.gr[1:5,1:3]
-
-dim(data.df)
-summary(data.gr)
-
-rm(data_folder,data_file)
-
-```
-
