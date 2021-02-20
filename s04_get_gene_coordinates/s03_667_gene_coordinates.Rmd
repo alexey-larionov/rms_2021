@@ -64,7 +64,7 @@ options(stringsAsFactors=F)
 
 # Files and folders
 base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests"
-working_folder=file.path(base_folder,"s04_explore_gene_list")
+working_folder=file.path(base_folder,"s04_get_gene_coordinates")
 setwd(working_folder)
 
 # Libraries
@@ -105,7 +105,7 @@ load(file.path(working_folder,"s02_667_gene_ids.RData"))
 
 # Update folders (just in case)
 base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests"
-working_folder=file.path(base_folder,"s04_explore_gene_list")
+working_folder=file.path(base_folder,"s04_get_gene_coordinates")
 
 ```
 
@@ -158,7 +158,7 @@ length(genes_658.grl)
 # Count genes by the locations number in Ref genome
 table(elementNROWS(genes_658.grl))
 
-# Note the convinience function elementNROWS() that is specific for GRL
+# Note the convinience function elementNROWS() for GRL
 # It is equivalent to unlist(lapply(grl,length))
 # Its contrintuitive that length(grl) somehow outputs list instead of vector
 #table(unlist(lapply(genes_658.grl,length))) 
@@ -186,6 +186,8 @@ SSX2 (6757) X+ and X-
 ```{r}
 
 # Remove Alt loci from transcript database: keep only standard chromosomes
+# Note using keepStandardChromosomes() function that is available for 
+# Annortation-databases instead of my previous manual handling of this step
 keepStandardChromosomes(b38.tx)
 seqlevels(b38.tx)
 
@@ -201,6 +203,7 @@ length(multi_genes_3.grl)
 multi_genes_3.grl
 
 # Make data frame with the gene names
+# note function stak(), which is specific for GRL: it converts GRL to GR
 multi_genes_3.df <- left_join(data.frame(stack(multi_genes_3.grl)),genes_667.df,
                               by = c("gene_id"="ENTREZID"))
 multi_genes_3.df

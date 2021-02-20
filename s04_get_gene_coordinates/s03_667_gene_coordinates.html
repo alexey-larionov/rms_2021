@@ -306,7 +306,7 @@ pre code {
 </style>
 <pre class="r"><code># Time stamp
 Sys.time()</code></pre>
-<pre><code>## [1] &quot;2021-02-20 14:22:49 GMT&quot;</code></pre>
+<pre><code>## [1] &quot;2021-02-20 14:50:36 GMT&quot;</code></pre>
 <pre class="r"><code># Clenan-up
 rm(list=ls())
 graphics.off()
@@ -314,14 +314,14 @@ graphics.off()
 # Memory
 gc()</code></pre>
 <pre><code>##          used (Mb) gc trigger (Mb) limit (Mb) max used (Mb)
-## Ncells 414802 22.2     864390 46.2         NA   641517 34.3
-## Vcells 787548  6.1    8388608 64.0      16384  1768567 13.5</code></pre>
+## Ncells 414805 22.2     864398 46.2         NA   641517 34.3
+## Vcells 787613  6.1    8388608 64.0      16384  1768547 13.5</code></pre>
 <pre class="r"><code># Options
 options(stringsAsFactors=F)
 
 # Files and folders
 base_folder=&quot;/Users/alexey/Documents/mg/s2021/zhang_tests&quot;
-working_folder=file.path(base_folder,&quot;s04_explore_gene_list&quot;)
+working_folder=file.path(base_folder,&quot;s04_get_gene_coordinates&quot;)
 setwd(working_folder)
 
 # Libraries
@@ -430,7 +430,7 @@ load(file.path(working_folder,&quot;s02_667_gene_ids.RData&quot;))
 
 # Update folders (just in case)
 base_folder=&quot;/Users/alexey/Documents/mg/s2021/zhang_tests&quot;
-working_folder=file.path(base_folder,&quot;s04_explore_gene_list&quot;)</code></pre>
+working_folder=file.path(base_folder,&quot;s04_get_gene_coordinates&quot;)</code></pre>
 </div>
 <div id="explore-transcripts-database" class="section level1">
 <h1><span class="header-section-number">5</span> Explore transcripts database</h1>
@@ -492,7 +492,7 @@ table(elementNROWS(genes_658.grl))</code></pre>
 <pre><code>## 
 ##   1   2   3   4   5   7  10 
 ## 628  22   2   2   1   2   1</code></pre>
-<pre class="r"><code># Note the convinience function elementNROWS() that is specific for GRL
+<pre class="r"><code># Note the convinience function elementNROWS() for GRL
 # It is equivalent to unlist(lapply(grl,length))
 # Its contrintuitive that length(grl) somehow outputs list instead of vector
 #table(unlist(lapply(genes_658.grl,length))) 
@@ -578,6 +578,8 @@ multi_genes_30.df &lt;- left_join(multi_genes_30.df,genes_667.df)</code></pre>
 <h2><span class="header-section-number">5.3</span> 3 Genes with multiple locations on standard chromosomes</h2>
 <p>P2RY8 (286530) X and Y CRLF2 (64109) X and Y SSX2 (6757) X+ and X-</p>
 <pre class="r"><code># Remove Alt loci from transcript database: keep only standard chromosomes
+# Note using keepStandardChromosomes() function that is available for 
+# Annortation-databases instead of my previous manual handling of this step
 keepStandardChromosomes(b38.tx)</code></pre>
 <pre><code>## TxDb object:
 ## # Db type: TxDb
@@ -641,6 +643,7 @@ length(multi_genes_3.grl)</code></pre>
 ##   -------
 ##   seqinfo: 25 sequences (1 circular) from hg38 genome</code></pre>
 <pre class="r"><code># Make data frame with the gene names
+# note function stak(), which is specific for GRL: it converts GRL to GR
 multi_genes_3.df &lt;- left_join(data.frame(stack(multi_genes_3.grl)),genes_667.df,
                               by = c(&quot;gene_id&quot;=&quot;ENTREZID&quot;))
 multi_genes_3.df</code></pre>
@@ -799,11 +802,11 @@ rm(genes_655.df)</code></pre>
 ##  [1] Rcpp_1.0.6                  lattice_0.20-41             prettyunits_1.1.1           Rsamtools_2.2.3             Biostrings_2.54.0           assertthat_0.2.1            digest_0.6.27               BiocFileCache_1.10.2        R6_2.5.0                    RSQLite_2.2.3               evaluate_0.14               httr_1.4.2                  pillar_1.4.7                zlibbioc_1.32.0             rlang_0.4.10                progress_1.2.2              curl_4.3                    blob_1.2.1                  Matrix_1.3-2                rmarkdown_2.6               BiocParallel_1.20.1         stringr_1.4.0               RCurl_1.98-1.2              bit_4.0.4                   biomaRt_2.42.1              DelayedArray_0.12.3         compiler_3.6.2              rtracklayer_1.46.0          xfun_0.21                   pkgconfig_2.0.3             askpass_1.1                 htmltools_0.5.1.1           openssl_1.4.3               tidyselect_1.1.0            SummarizedExperiment_1.16.1
 ## [36] tibble_3.0.6                GenomeInfoDbData_1.2.2      matrixStats_0.58.0          XML_3.99-0.3                crayon_1.4.1                dbplyr_2.1.0                GenomicAlignments_1.22.1    bitops_1.0-6                rappdirs_0.3.3              grid_3.6.2                  lifecycle_1.0.0             DBI_1.1.1                   magrittr_2.0.1              stringi_1.5.3               cachem_1.0.4                XVector_0.26.0              ellipsis_0.3.1              generics_0.1.0              vctrs_0.3.6                 tools_3.6.2                 bit64_4.0.5                 glue_1.4.2                  purrr_0.3.4                 hms_1.0.0                   fastmap_1.1.0               yaml_2.2.1                  memoise_2.0.0               knitr_1.31</code></pre>
 <pre class="r"><code>Sys.time()</code></pre>
-<pre><code>## [1] &quot;2021-02-20 14:22:59 GMT&quot;</code></pre>
+<pre><code>## [1] &quot;2021-02-20 14:50:46 GMT&quot;</code></pre>
 <pre class="r"><code>gc()</code></pre>
 <pre><code>##            used  (Mb) gc trigger  (Mb) limit (Mb) max used  (Mb)
-## Ncells  7141717 381.5   13460258 718.9         NA 11731682 626.6
-## Vcells 12364110  94.4   21469060 163.8      16384 17824217 136.0</code></pre>
+## Ncells  7141723 381.5   13460297 718.9         NA 11732137 626.6
+## Vcells 12364198  94.4   21468864 163.8      16384 17823881 136.0</code></pre>
 </div>
 
 
