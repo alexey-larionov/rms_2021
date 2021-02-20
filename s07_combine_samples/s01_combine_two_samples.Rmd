@@ -1,0 +1,242 @@
+---
+title: "Gather variants from Zhang samples"
+author: "Alexey Larionov"
+date: "18 Feb 2021"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float: 
+      collapsed: false
+editor_options:
+  chunk_output_type: console
+---
+
+# Summary
+
+Loop over all annotated text files from Zhang samples:  
+
+- Read to GRanges  
+- Select variants overlapping with 161 genes  
+- Add to the total list of variants  
+
+## notes
+
+BASS Annotations in different text files can be different
+so, selecting missenses and in-frames should be done in individual samples level
+
+Then a minimal necessary set of metadata should be kept that are the same for any sample: 
+e.g. only Ref and Alt ??? 
+
+Use overlap type="equal"? 
+
+subsetByOverlaps(gr12,setdiff(gr12,gr23))
+
+re these euqal for metadata and for coordinates?
+
+subsetByOverlaps(gr12,intersect(gr12,gr23)) 
+subsetByOverlaps(gr23,intersect(gr12,gr23))
+
+# Start section
+
+<style>
+pre {
+  overflow-x: auto;
+}
+pre code {
+  word-wrap: normal;
+  white-space: pre;
+}
+</style>
+
+```{r echo=F}
+#options(width = 999)
+```
+
+```{r}
+
+# Time stamp
+Sys.time()
+
+# Clenan-up
+rm(list=ls())
+graphics.off()
+
+# Memory
+gc()
+
+# Options
+options(stringsAsFactors=F)
+
+# Files and folders
+base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests"
+working_folder=file.path(base_folder,"s07_combine_samples")
+setwd(working_folder)
+
+# Libraries
+library(GenomicRanges)
+
+```
+
+# Read two samples into genomic ranges
+
+```{r}
+
+sample_file=file.path(base_folder,"d03_germline_annotated_files","RMSzhang_SJRHB020_hg38.bwa.QC.scores.filter.txt")
+sample1.gr <- GRanges(read.table(sample_file, header=T, sep = "\t", quote = "", na.strings="-9"))
+summary(sample1.gr)
+
+sample_file=file.path(base_folder,"d03_germline_annotated_files","RMSzhang_SJRHB022_hg38.bwa.QC.scores.filter.txt")
+sample2.gr <- GRanges(read.table(sample_file, header=T, sep = "\t", quote = "", na.strings="-9"))
+summary(sample2.gr)
+
+rm(sample_file)
+
+```
+
+# Preprocess
+
+## Remove varints on non-canonical chromosomes  
+
+```{r}
+
+# Sort GRanges
+data.gr <- sort(data.gr)
+
+# Keep only variants on canonical chromosomes
+sample1.gr <- keepStandardChromosomes(sample1.gr, pruning.mode="coarse")
+sample2.gr <- keepStandardChromosomes(sample2.gr, pruning.mode="coarse")
+
+# Overlap with 161 genes
+selected_variants.gr <- subsetByOverlaps(data.gr, genes_161.gr)
+  
+  # Add to the final result
+  if(i==1){
+    result.gr <- selected_variants.gr
+  }else{
+    r.gr <- union(result.gr, selected_variants.gr)
+    #result.gr <- union(result.gr, selected_variants.gr)
+  }
+  
+  summary(r.gr)
+
+  # Clean-up
+  rm(data_file, data.df, data.gr, selected_variants.gr)
+  
+} # Next sample
+
+```
+
+```{r}
+library(GenomicRanges)
+
+gr12 <- GRanges(seqnames = c("chr1", "chr2"),
+             ranges = IRanges(c(1, 11), c(11, 20)),
+             seqinfo = Seqinfo(c("chr1", "chr2", "chr3")),
+             score = c("a","b"))
+
+gr23 <- GRanges(seqnames = c("chr2", "chr3"),
+             ranges = IRanges(c(11, 21), c(20, 30)),
+             seqinfo = Seqinfo(c("chr1", "chr2", "chr3")),
+             score = c("b","c"))
+
+gr12
+gr23
+
+BASS Annotations in different text files can be different
+
+subsetByOverlaps(gr12,setdiff(gr12,gr23))
+
+# Are these euqal for metadata and for coordinates?
+subsetByOverlaps(gr12,intersect(gr12,gr23))
+subsetByOverlaps(gr23,intersect(gr12,gr23))
+
+subsetByOverlaps(gr23,setdiff(gr23,gr12))
+
+
+u <- union(x,y)
+?findOverlaps
+queryHits(overlapsAny(u, x))
+
+elementMetadata(u[overlapsAny(u, x)])$x = elementMetadata(gr1)[,1]
+
+elementMetadata(u[overlapsAny(u, gr2)])$gr2 = elementMetadata(gr2)[,1]
+
+subsetByOverlaps(gr23,setdiff(gr23,gr12))
+
+x <- GRanges(seqnames = c("chr1", "chr2"),
+               ranges = IRanges(c(1, 11), c(11, 20)))
+
+y <- GRanges(seqnames = c("chr2", "chr3"),
+               ranges = IRanges(c(11, 21), c(20, 30)))
+x
+y
+union(x,y)
+
+```
+
+
+```{r}
+
+install.packages("SparseSummarizedExperiment")
+
+```
+
+
+# Save data
+
+```{r}
+
+save.image("s01_read_annotated_txt_to_granges.RData")
+
+```
+
+# Final section
+
+```{r}
+
+ls()
+sessionInfo()
+Sys.time()
+gc()
+
+```
+
+# Web examples
+
+## Approach by Pete Haitch  
+
+Its a package available on the author's page on GitHub.  
+However, it has not been submitted to Bioconductor or CRAN.    
+Also, it has not been developed for several years (since 2015).  
+
+https://github.com/PeteHaitch/SparseSummarizedExperiment/blob/master/ideas/combining-SummarizedExperiment-objects.Rmd  
+
+```{r eval=F}
+
+setMethod("combine", c("GRanges", "GRanges"),
+          function(x, y, ...) {
+            
+            if (length(y) == 0L) {
+              return(x)
+            } else if (length(x) == 0L) {
+              return(y)
+            }
+            
+            if (is.null(names(x)) || is.null(names(y))) {
+              stop("'names' of 'x' and 'y' must be non-NULL")
+            }
+            shared_elements <- intersect(names(x), names(y))
+            ok <- all.equal(x[shared_elements], y[shared_elements])
+            if (!isTRUE(ok)) {
+              stop("GRanges shared elements differ: ", ok)
+            }
+            c(x, y[setdiff(names(y), shared_elements)], ignore.mcols = FALSE)
+          }
+)
+
+```
+
+## Another example of merging GRanges
+
+https://support.bioconductor.org/p/87075/  
