@@ -1,0 +1,297 @@
+---
+title: "Get coordinates of 667 genes"
+author: "Alexey Larionov"
+date: "20 Feb 2021"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
+editor_options:
+  chunk_output_type: console
+---
+
+# Summary
+
+Script selects coordinates for 655 out of 667 genes: **655 = 667 - 9 - 3**  
+
+9 Genes are not present in the transcripts database because they are not transcribed or missed Entrez ID.  
+
+30 genes have multiple locations in Ref genome.  
+
+27 of these genes have the "main" location in standard chromosomes and "additional" location(s) in Alt loci.  For such genes only coordinaltes on standard chromosomes are taken.  
+
+In 3 genes the multiple locations were reported within standard chromosomes:  
+
+- P2RY8 (286530) X and Y  
+- CRLF2 (64109) X and Y  
+- SSX2 (6757) X+ and X-  
+
+Coordinates for such genes could be dealt with on an ad-hoc basis.  In this script these 3 genes are just excluded from the final list.  
+
+# Start section
+
+<style>
+pre {
+  overflow-x: auto;
+}
+pre code {
+  word-wrap: normal;
+  white-space: pre;
+}
+</style>
+
+```{r echo=F}
+options(width = 999)
+```
+
+```{r}
+
+# Time stamp
+Sys.time()
+
+# Clenan-up
+rm(list=ls())
+graphics.off()
+
+# Memory
+gc()
+
+# Options
+options(stringsAsFactors=F)
+
+# Files and folders
+base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests"
+working_folder=file.path(base_folder,"s04_explore_gene_list")
+setwd(working_folder)
+
+# Libraries
+library(dplyr)
+
+```
+
+# Transcripts database
+
+This database package is used to retrieve coordinates of human transcripts; also it provides exones and CDS; the genes are given by entrez-ids  
+
+```{r}
+
+#BiocManager::install("TxDb.Hsapiens.UCSC.hg38.knownGene")
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+
+# Connect to the database
+b38.tx <- TxDb.Hsapiens.UCSC.hg38.knownGene
+
+# Check connection
+b38.tx
+length(seqlevels(b38.tx))
+seqlevels(b38.tx)[1:30]
+columns(b38.tx)
+
+# This command can be used to keep only standard chromosomes
+# (i.e. to remove Alt loci)
+#keepStandardChromosomes(b38.tx)
+
+```
+
+# Read 667 genes
+
+```{r}
+
+# Load data
+load(file.path(working_folder,"s02_667_gene_ids.RData"))
+
+# Update folders (just in case)
+base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests"
+working_folder=file.path(base_folder,"s04_explore_gene_list")
+
+```
+
+# Explore transcripts database
+
+## 628 genes with a single location in Ref genome
+
+Function *genes()* retrieves gene locations (as GRanges) from the Transcript Database: see *?genes*.
+
+The default *genes()* setting **single.strand.genes.only=T** does not include genes with multiple locations in **reference** genome, such as  
+
+- located in canonical and in Alt loci  
+- duplicated in X and Y chromosomes (e.g. in pseudoautosomal regions)  
+- some other cases, as will be seen below  
+
+Finaly, some "genes" that have Entrez ID-s may have no transcripts, such as  
+
+- pseudogenes  
+- loci that have combinatorial transcription, e.g. receptors and molecules related to immune responce  
+
+Thus, some genes included in 667 list are not retrieved by the default *genes()* call.   
+
+```{r}
+
+genes_628.gr <- genes(b38.tx, 
+                      filter=list(gene_id = genes_667.df$ENTREZID))
+
+length(genes_628.gr)
+
+genes_628.gr
+
+```
+
+## 30 genes with multiple locations in Ref genome
+
+To show all genes present in the database, the dafult *genes()* settings should be overwritten by **single.strand.genes.only=F**.  
+
+Importantly, the output will change from *genomic ranges* to *genomic ranges* **list**: one *geniomic ranges* obgect per gene, where some genes are presented by several ranges.  
+
+```{r}
+
+# Get genes from our list
+genes_658.grl <- genes(b38.tx, 
+                       filter=list(gene_id = genes_667.df$ENTREZID), 
+                       single.strand.genes.only=F)
+
+# Check the number of genes
+length(genes_658.grl)
+
+# Count genes by the locations number in Ref genome
+table(elementNROWS(genes_658.grl))
+
+# Note the convinience function elementNROWS() that is specific for GRL
+# It is equivalent to unlist(lapply(grl,length))
+# Its contrintuitive that length(grl) somehow outputs list instead of vector
+#table(unlist(lapply(genes_658.grl,length))) 
+
+# Genes with multiple locations in Ref genome
+multi_genes_30.grl <- genes_658.grl[elementNROWS(genes_658.grl)>1]
+length(multi_genes_30.grl)
+multi_genes_30.grl
+
+# Make the dataframe to add Gene names
+multi_genes_30.df <- data.frame(ENTREZID=names(multi_genes_30.grl),
+                                n_loci=elementNROWS(multi_genes_30.grl))
+
+multi_genes_30.df <- left_join(multi_genes_30.df,genes_667.df)
+multi_genes_30.df %>% arrange(desc(n_loci))
+
+```
+
+## 3 Genes with multiple locations on standard chromosomes
+
+P2RY8 (286530) X and Y
+CRLF2 (64109) X and Y
+SSX2 (6757) X+ and X- 
+
+```{r}
+
+# Remove Alt loci from transcript database: keep only standard chromosomes
+keepStandardChromosomes(b38.tx)
+seqlevels(b38.tx)
+
+# Get genes from 667 list with transcripts on standard chromosomes
+genes_658.grl <- genes(b38.tx, 
+                       filter=list(gene_id = genes_667.df$ENTREZID), 
+                       single.strand.genes.only=F)
+length(genes_658.grl)
+
+# Genes with multiple locations on standard chromosomes
+multi_genes_3.grl <- genes_658.grl[elementNROWS(genes_658.grl)>1]
+length(multi_genes_3.grl)
+multi_genes_3.grl
+
+# Make data frame with the gene names
+multi_genes_3.df <- left_join(data.frame(stack(multi_genes_3.grl)),genes_667.df,
+                              by = c("gene_id"="ENTREZID"))
+multi_genes_3.df
+
+```
+
+## 9 genes absent in the transcripts database 
+
+The first gene may be recorded as FGFR1OP
+The second is a pseudogene?
+The remaining "genes" are loci with combinatorial transcription, which might be absent in a standard transcript database, e.g. :
+
+- https://www.ncbi.nlm.nih.gov/gene/3492  
+- https://www.ncbi.nlm.nih.gov/gene/6955  
+
+```{r}
+
+absent_genes_9.df <- genes_667.df[!genes_667.df$ENTREZID %in% names(genes_658.grl),]
+
+dim(absent_genes_9.df)
+
+absent_genes_9.df
+
+```
+
+# 655 genes list  
+
+Includes  
+
+- 628 genes with unique locations on standard chromosomes  
+- 27 genes with multiple locations, where only one of them is on standard chromosomes  
+
+```{r}
+
+# Alt loci have already been removed from transcript database 
+#keepStandardChromosomes(b38.tx)
+seqlevels(b38.tx)
+
+# Use default genes() setting to get rid of genes with multiple locations in genome
+genes_655.gr <- genes(b38.tx, 
+                      filter=list(gene_id = genes_667.df$ENTREZID))
+length(genes_655.gr)
+
+# Sort by position
+genes_655.gr <- sort(genes_655.gr)
+
+# Check result
+genes_655.gr
+
+```
+
+# Add symbols
+
+```{r}
+
+# Prepare data frame with gene names for 655 GR: 
+# select by Entrez ID and sync the order with GR
+genes_655.df <- genes_667.df[genes_667.df$ENTREZID %in% genes_655.gr$gene_id,]
+rownames(genes_655.df) <- genes_655.df$ENTREZID
+genes_655.df <- genes_655.df[genes_655.gr$gene_id,]
+
+# Check result
+head(genes_655.gr)
+head(genes_655.df)
+
+# Add Symbols to GR object
+genes_655.gr$symbol <- genes_655.df$SYMBOL
+
+# Check result
+genes_655.gr
+
+# Clean-up
+rm(genes_655.df)
+
+```
+
+# Save data
+
+```{r}
+
+save.image("s03_667_gene_coordinates.RData")
+
+```
+
+# Final section
+
+```{r}
+
+ls()
+sessionInfo()
+Sys.time()
+gc()
+
+```

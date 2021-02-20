@@ -123,8 +123,10 @@ rm(gr,gr1)
 
 ```{r}
 
-# Get variants by overlap (see details in ?subsetByOverlaps)
-variants_161_genes.gr <- subsetByOverlaps(data.gr, genes_161.gr)
+# Get variants by overlap
+# see details in ?subsetByOverlaps
+# note that the default overlap type is "any"
+variants_161_genes.gr <- subsetByOverlaps(data.gr, genes_161.gr, type="any")
 
 # Explore result
 summary(variants_161_genes.gr)

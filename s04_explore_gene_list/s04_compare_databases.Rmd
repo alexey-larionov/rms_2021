@@ -1,0 +1,94 @@
+---
+title: "Test1"
+author: "AL"
+date: "19/02/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Load packages
+
+```{r}
+
+library(VennDiagram)
+
+#BiocManager::install("org.Hs.eg.db")
+library(org.Hs.eg.db)
+
+#BiocManager::install("TxDb.Hsapiens.UCSC.hg38.knownGene")
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+
+```
+
+# Read entrez id-s from genes and transcripts databases
+
+```{r}
+
+# Gene names
+b38.org <- org.Hs.eg.db
+entrez2symbols.df <- select(b38.org,
+            keys=keys(entrez_hs,"ENTREZID"),
+            columns=c("SYMBOL","ENTREZID"),
+            keytype="ENTREZID")
+
+dim(entrez2symbols.df)
+head(entrez2symbols.df)
+
+# Transcripts
+b38.tx <- TxDb.Hsapiens.UCSC.hg38.knownGene
+b38.tx
+entrez_id_tx.df <- select(b38.tx,
+            keys=keys(b38.tx,"GENEID"),
+            columns=c("GENEID"),
+            keytype="GENEID")
+
+dim(entrez_id_tx.df)
+head(entrez_id_tx.df)
+
+```
+
+# Check duplicated and missed 
+
+```{r}
+
+# Gene names
+sum(duplicated(entrez2symbols.df$ENTREZID))
+sum(duplicated(entrez2symbols.df$SYMBOL))
+
+# Transcripts 
+sum(duplicated(entrez_id_tx.df$GENEID))
+
+```
+
+# Compare Tx and Genes databases
+
+```{r}
+
+x <- setdiff(entrez_id_tx.df$GENEID,entrez2symbols.df$ENTREZID)
+length(x)
+x
+
+y <- intersect(entrez_id_tx.df$GENEID,entrez2symbols.df$ENTREZID)
+length(y)
+
+z <- venn.diagram(list(entrez_id_tx.df$GENEID,
+                  genes_db=entrez2symbols.df$ENTREZID),
+             filename=NULL);
+
+grid.draw(z)
+
+rm(x,y,z)
+
+```
+
+# Web example
+
+https://support.bioconductor.org/p/81083/ 
+
+```{r}
+
+
+
+```
+

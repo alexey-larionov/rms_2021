@@ -1,0 +1,126 @@
+---
+title: "Get Entrez ID-s for 667 genes from **org.Hs.eg.db** database"
+author: "Alexey Larionov"
+date: "20 Feb 2021"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
+editor_options:
+  chunk_output_type: console
+---
+
+# Summary
+
+Get Entrez-ID-s for 667 genes list  
+
+# Start section
+
+<style>
+pre {
+  overflow-x: auto;
+}
+pre code {
+  word-wrap: normal;
+  white-space: pre;
+}
+</style>
+
+```{r echo=F}
+options(width = 999)
+```
+
+```{r}
+
+# Time stamp
+Sys.time()
+
+# Clenan-up
+rm(list=ls())
+graphics.off()
+
+# Memory
+gc()
+
+# Options
+options(stringsAsFactors=F)
+
+# Files and folders
+base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests"
+working_folder=file.path(base_folder,"s04_explore_gene_list")
+setwd(working_folder)
+
+# This database package contains multiple gene-related ID-s including Entrez-ids and gene Symbols
+#BiocManager::install("org.Hs.eg.db")
+library(org.Hs.eg.db)
+
+```
+
+# Read gene names
+
+```{r}
+
+data_file=file.path(base_folder,"d04_gene_lists","667_genes_optimised.txt")
+genes_667 <- scan(data_file,what="character")
+#genes_667
+
+rm(data_file)
+
+```
+
+# Get gene ID-s
+
+```{r}
+
+# Connect to the database with entrez ids and gene symbols
+hs.org <- org.Hs.eg.db
+hs.org
+
+#keytypes(hs.org)
+#columns(hs.org)
+
+# Select required Entrez IDs
+genes_667.df <- select(hs.org,
+            keys=genes_667, keytype="SYMBOL",
+            columns=c("ENTREZID","SYMBOL"))
+
+dim(genes_667.df)
+head(genes_667.df)
+
+# Check missed data
+sum(is.na(genes_667.df$ENTREZID))
+sum(is.na(genes_667.df$SYMBOL))
+
+genes_667.df[is.na(genes_667.df$ENTREZID),]
+mapIds(hs.org,"FGFR1OP","ENTREZID","SYMBOL")
+
+# Check duplicated data
+sum(duplicated(genes_667.df$ENTREZID),na.rm=T)
+sum(duplicated(genes_667.df$SYMBOL))
+
+# Clean-up
+rm(hs.org, genes_667)
+
+```
+
+# Save data
+
+```{r}
+
+save.image("s02_667_gene_ids.RData")
+
+```
+
+# Final section
+
+```{r}
+
+ls()
+sessionInfo()
+Sys.time()
+gc()
+
+```
