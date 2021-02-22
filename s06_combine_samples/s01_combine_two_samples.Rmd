@@ -14,11 +14,10 @@ editor_options:
 
 # Summary
 
-Loop over all annotated text files from Zhang samples:  
-
-- Read to GRanges  
-- Select variants overlapping with 161 genes  
-- Add to the total list of variants  
+- Read two Zhang samples to GRanges  
+- Preprocess  
+  + Select variants overlapping with 161 genes  
+  + Add to the total list of variants  
 
 ## notes
 
@@ -70,7 +69,7 @@ options(stringsAsFactors=F)
 
 # Files and folders
 base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests"
-working_folder=file.path(base_folder,"s07_combine_samples")
+working_folder=file.path(base_folder,"s06_combine_samples")
 setwd(working_folder)
 
 # Libraries
@@ -78,54 +77,286 @@ library(GenomicRanges)
 
 ```
 
+# Read 655 (~667) gene coordinates
+
+```{r}
+
+# Load data
+load(file.path(base_folder,"s04_get_gene_coordinates","s03_667_gene_coordinates.RData"))
+rm(absent_genes_9.df,genes_628.gr,genes_658.grl,genes_667.df,
+   multi_genes_3.df, multi_genes_3.grl,multi_genes_30.df,multi_genes_30.grl)
+summary(genes_655.gr)
+genes_655.gr
+
+# Update folders (just in case)
+base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests"
+working_folder=file.path(base_folder,"s06_combine_samples")
+
+```
+
 # Read two samples into genomic ranges
 
 ```{r}
 
-sample_file=file.path(base_folder,"d03_germline_annotated_files","RMSzhang_SJRHB020_hg38.bwa.QC.scores.filter.txt")
-sample1.gr <- GRanges(read.table(sample_file, header=T, sep = "\t", quote = "", na.strings="-9"))
+sample1_file=file.path(base_folder,"d03_germline_annotated_files","RMSzhang_SJRHB020_hg38.bwa.QC.scores.filter.txt")
+sample1.df <- read.table(sample1_file, 
+                         header=T, sep = "\t", quote = "", na.strings="-9")
+sample1.gr <- GRanges(sample1.df,seqinfo=Seqinfo(genome="hg38"))
 summary(sample1.gr)
+sample1.gr[,1:2]
 
-sample_file=file.path(base_folder,"d03_germline_annotated_files","RMSzhang_SJRHB022_hg38.bwa.QC.scores.filter.txt")
-sample2.gr <- GRanges(read.table(sample_file, header=T, sep = "\t", quote = "", na.strings="-9"))
+sample2_file=file.path(base_folder,"d03_germline_annotated_files","RMSzhang_SJRHB022_hg38.bwa.QC.scores.filter.txt")
+sample2.df <- read.table(sample2_file, 
+                         header=T, sep = "\t", quote = "", na.strings="-9")
+sample2.gr <- GRanges(sample2.df,seqinfo=Seqinfo(genome="hg38"))
 summary(sample2.gr)
+sample2.gr[,1:2]
 
-rm(sample_file)
+rm(sample1_file,sample1.df,sample2_file,sample2.df)
 
 ```
 
 # Preprocess
 
-## Remove varints on non-canonical chromosomes  
+```{r}
+
+# Make simple handles
+x <- sample1.gr
+y <- sample2.gr
+g <- genes_655.gr
+
+# Keep only variants on standard chromosomes
+x <- keepStandardChromosomes(x, pruning.mode="coarse")
+x[,1:2]
+
+y <- keepStandardChromosomes(y, pruning.mode="coarse")
+  
+# Overlap with the gene list
+x <- subsetByOverlaps(x, g, type="any")
+y <- subsetByOverlaps(y, g, type="any")
+  
+# Exclude common variants (MAF > 0.5)
+x <- x[x$gnomAD_genome_ALL <= 0.05 | 
+       x$gnomAD_genome_ALL >= 0.95 | 
+       is.na(x$gnomAD_genome_ALL)]
+
+y <- y[y$gnomAD_genome_ALL <= 0.05 | 
+       y$gnomAD_genome_ALL >= 0.95 | 
+       is.na(y$gnomAD_genome_ALL)]
+
+# Clean-up
+rm(g, genes_655.gr)
+
+```
+
+# Make var-id-s
 
 ```{r}
 
-# Sort GRanges
-data.gr <- sort(data.gr)
+# Make x variant id-s
+x_chr <- as.character(x@seqnames)
+x_start <- as.data.frame(x@ranges)$start
+#x_end <- as.data.frame(x@ranges)$end
+x_ref <- x$Ref
+x_alt <- x$Alt
+x_var_id <- paste(x_chr,x_start,x_ref,x_alt,sep="_")
+x$var_id <- x_var_id
+names(x) <- x_var_id
+x[,c("var_id","Gene.refGene")]
+rm(x_chr,x_start,x_ref,x_alt,x_var_id)
 
-# Keep only variants on canonical chromosomes
-sample1.gr <- keepStandardChromosomes(sample1.gr, pruning.mode="coarse")
-sample2.gr <- keepStandardChromosomes(sample2.gr, pruning.mode="coarse")
-
-# Overlap with 161 genes
-selected_variants.gr <- subsetByOverlaps(data.gr, genes_161.gr)
-  
-  # Add to the final result
-  if(i==1){
-    result.gr <- selected_variants.gr
-  }else{
-    r.gr <- union(result.gr, selected_variants.gr)
-    #result.gr <- union(result.gr, selected_variants.gr)
-  }
-  
-  summary(r.gr)
-
-  # Clean-up
-  rm(data_file, data.df, data.gr, selected_variants.gr)
-  
-} # Next sample
+# Make y variant id-s
+y_chr <- as.character(y@seqnames)
+y_start <- as.data.frame(y@ranges)$start
+#y_end <- as.data.frame(y@ranges)$end
+y_ref <- y$Ref
+y_alt <- y$Alt
+y_var_id <- paste(y_chr,y_start,y_ref,y_alt,sep="_")
+y$var_id <- y_var_id
+names(y) <- y_var_id
+y[,c("var_id","Gene.refGene")]
+rm(y_chr,y_start,y_ref,y_alt,y_var_id)
 
 ```
+
+# Get subset var_id-s
+
+```{r}
+
+unique_x <- setdiff(x$var_id, y$var_id)
+length(unique_x)
+
+unique_y <- setdiff(y$var_id, x$var_id)
+length(unique_y)
+
+intersect_xy <- intersect(x$var_id, y$var_id)
+length(intersect_xy)
+
+union_xy <- union(x$var_id, y$var_id)
+length(union_xy)
+
+#length(c(unique_x,unique_y,intersect_xy)) == length(union_xy)
+
+```
+
+# Select annotations to keep
+
+## List of stable annotations
+
+```{r}
+
+# Review available annotations
+colnames(mcols(x))
+#x.df <- as.data.frame(x)
+
+# Select annotations to keep
+stable_annotations <- c("var_id",
+"Gene.refGene","Func.refGene","ExonicFunc.refGene",
+"CLNSIG","CLNREVSTAT","CLNDN",
+"avsnp150","HGVS_cDNA","HGVS_Prot",
+"Ref","Alt",
+"CDS_Pos","TranscriptSize",
+"AA_Pos","AA1","AA2","ProteinSize","Interpro_domain",
+"gnomAD_genome_ALL","ExAC_ALL")
+
+```
+
+## Matrices for variable annotations
+
+```{r}
+
+# Unstable annotations
+
+# Score
+score.mx <- matrix(NA,ncol=2,nrow=length(union_xy))
+rownames(score.mx) <- union_xy
+colnames(score.mx) <- c("s1","s2")
+head(score.mx)
+
+#"TruncScore"
+#"HomozygScore"
+#"XAcorrect"
+
+# Other matrices
+
+# GT
+gt.mx <- matrix(NA,ncol=2,nrow=length(union_xy))
+rownames(gt.mx) <- union_xy
+colnames(gt.mx) <- c("s1","s2")
+head(gt.mx)
+
+#"Depth"
+#"AD"
+
+```
+
+# Process non-overlapping variants
+
+## GRanges
+
+```{r}
+
+unique_x.gr <- x[unique_x,stable_annotations]
+summary(unique_x.gr)
+
+unique_y.gr <- y[unique_y,stable_annotations]
+summary(unique_y.gr)
+
+```
+
+## Matrices
+
+```{r}
+
+score.mx[unique_x,"s1"] <- as.data.frame(x[unique_x,])$Score
+gt.mx[unique_x,"s1"] <- as.data.frame(x[unique_x,])$GT
+
+score.mx[unique_y,"s2"] <- as.data.frame(y[unique_y,])$Score
+gt.mx[unique_y,"s2"] <- as.data.frame(y[unique_y,])$GT
+
+```
+
+# Process overlapping variants
+
+## Granges
+
+It may be simplifyed by removing the consistency check  
+
+```{r}
+
+# Get intersect ranges from both samples
+intersect_x.gr <- x[intersect_xy,stable_annotations]
+summary(intersect_x.gr)
+
+intersect_y.gr <- y[intersect_xy,stable_annotations]
+summary(intersect_y.gr)
+
+# Check that intersect ranges from both samples are equal
+if (!all(intersect_x.gr==intersect_y.gr)) {
+  stop("GRanges shared elements differ", ok)
+}
+
+# Save the intersect
+intersect_xy.gr <- intersect_x.gr
+
+# Clean-up
+rm(intersect_x.gr,intersect_y.gr)
+
+```
+
+## Matrices
+
+```{r}
+
+score.mx[unique_x,"s1"] <- as.data.frame(x[unique_x,])$Score
+gt.mx[unique_x,"s1"] <- as.data.frame(x[unique_x,])$GT
+
+score.mx[unique_y,"s2"] <- as.data.frame(y[unique_y,])$Score
+gt.mx[unique_y,"s2"] <- as.data.frame(y[unique_y,])$GT
+
+```
+
+# Combine overlapping and non-overlapping granges
+
+```{r}
+
+# Combine granges
+xy.gr <- c(unique_x.gr,unique_y.gr,intersect_xy.gr)
+
+# Keep order consistent with the matrices
+xy.gr <- xy.gr[union_xy]
+
+# Check result
+summary(xy.gr)
+seqlevels(xy.gr)
+
+# Compare with matrices
+xy.gr[,1:2]
+score.mx[1:5,]
+gt.mx[1:5,]
+
+```
+
+# Save data
+
+```{r}
+
+save.image("s01_read_annotated_txt_to_granges.RData")
+
+```
+
+# Final section
+
+```{r}
+
+ls()
+sessionInfo()
+Sys.time()
+gc()
+
+```
+
+# etc
 
 ```{r}
 library(GenomicRanges)
@@ -182,25 +413,6 @@ install.packages("SparseSummarizedExperiment")
 
 ```
 
-
-# Save data
-
-```{r}
-
-save.image("s01_read_annotated_txt_to_granges.RData")
-
-```
-
-# Final section
-
-```{r}
-
-ls()
-sessionInfo()
-Sys.time()
-gc()
-
-```
 
 # Web examples
 

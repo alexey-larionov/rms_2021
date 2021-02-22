@@ -1,7 +1,7 @@
 ---
 title: "Get coordinates of 667 genes"
 author: "Alexey Larionov"
-date: "20 Feb 2021"
+date: "22 Feb 2021"
 output:
   html_document:
     toc: true
@@ -30,6 +30,10 @@ In 3 genes the multiple locations were reported within standard chromosomes:
 - SSX2 (6757) X+ and X-  
 
 Coordinates for such genes could be dealt with on an ad-hoc basis.  In this script these 3 genes are just excluded from the final list.  
+
+Finally, when the final GRanges for down-stream analysis is made its seqlevels are explicitly limited to standard chromosomes and updated with information from Seqlevels(genome="hg38"). The same seqlevels will be later used when reading the annotated text files.  Keeping the seqlevels consistent is good for awoiding  warnings during overlap or concatenation of the GRanges.  
+
+The script uses *elementNROWS()*, *stack()*, *keepStandardChromosomes()* and *Seqinfo(genome="hg38")* that are defined for GRanges/GRanges/Annotations.  See help for more detail.  
 
 # Start section
 
@@ -78,21 +82,28 @@ This database package is used to retrieve coordinates of human transcripts; also
 
 ```{r}
 
+# An alternative b38 package might be from Ensembl
+# The latest b38 Ensembl db (in Feb2021) is v86
+#BiocManager::install("EnsDb.Hsapiens.v86")
+#library(EnsDb.Hsapiens.v86)
+#EnsDb.Hsapiens.v86
+#columns(EnsDb.Hsapiens.v86)
+
 #BiocManager::install("TxDb.Hsapiens.UCSC.hg38.knownGene")
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 
 # Connect to the database
-b38.tx <- TxDb.Hsapiens.UCSC.hg38.knownGene
+tx.b38 <- TxDb.Hsapiens.UCSC.hg38.knownGene
 
 # Check connection
-b38.tx
-length(seqlevels(b38.tx))
-seqlevels(b38.tx)[1:30]
-columns(b38.tx)
+tx.b38
+length(seqlevels(tx.b38))
+seqlevels(tx.b38)[1:30]
+columns(tx.b38)
 
 # This command can be used to keep only standard chromosomes
 # (i.e. to remove Alt loci)
-#keepStandardChromosomes(b38.tx)
+#keepStandardChromosomes(tx.b38)
 
 ```
 
@@ -124,13 +135,13 @@ The default *genes()* setting **single.strand.genes.only=T** does not include ge
 Finaly, some "genes" that have Entrez ID-s may have no transcripts, such as  
 
 - pseudogenes  
-- loci that have combinatorial transcription, e.g. receptors and molecules related to immune responce  
+- loci that may have a sort of combinatorial transcription, e.g. receptors and molecules related to immune response  
 
 Thus, some genes included in 667 list are not retrieved by the default *genes()* call.   
 
 ```{r}
 
-genes_628.gr <- genes(b38.tx, 
+genes_628.gr <- genes(tx.b38, 
                       filter=list(gene_id = genes_667.df$ENTREZID))
 
 length(genes_628.gr)
@@ -141,14 +152,14 @@ genes_628.gr
 
 ## 30 genes with multiple locations in Ref genome
 
-To show all genes present in the database, the dafult *genes()* settings should be overwritten by **single.strand.genes.only=F**.  
+To show all genes present in the database, *genes()* should be run with option **single.strand.genes.only=F**.  
 
-Importantly, the output will change from *genomic ranges* to *genomic ranges* **list**: one *geniomic ranges* obgect per gene, where some genes are presented by several ranges.  
+This will retrieve all the genes, which are present in the tx.db.  However, the output will change from *genomic ranges* to *genomic ranges* **list**: one *geniomic ranges* obgect per gene, where some genes are presented by several ranges.  
 
 ```{r}
 
 # Get genes from our list
-genes_658.grl <- genes(b38.tx, 
+genes_658.grl <- genes(tx.b38, 
                        filter=list(gene_id = genes_667.df$ENTREZID), 
                        single.strand.genes.only=F)
 
@@ -179,25 +190,28 @@ multi_genes_30.df %>% arrange(desc(n_loci))
 
 ## 3 Genes with multiple locations on standard chromosomes
 
-P2RY8 (286530) X and Y
-CRLF2 (64109) X and Y
-SSX2 (6757) X+ and X- 
+After removing Alt loci from the tx.db, we still have 3 genes with multiple locations:  
+
+- P2RY8 (286530) X and Y  
+- CRLF2 (64109) X and Y  
+- SSX2 (6757) X+ and X-  
 
 ```{r}
 
 # Remove Alt loci from transcript database: keep only standard chromosomes
 # Note using keepStandardChromosomes() function that is available for 
 # Annortation-databases instead of my previous manual handling of this step
-keepStandardChromosomes(b38.tx)
-seqlevels(b38.tx)
+keepStandardChromosomes(tx.b38)
+seqlevels(tx.b38)
 
-# Get genes from 667 list with transcripts on standard chromosomes
-genes_658.grl <- genes(b38.tx, 
+# Get all genes from 667 list with transcripts on standard chromosomes
+genes_658.grl <- genes(tx.b38, 
                        filter=list(gene_id = genes_667.df$ENTREZID), 
                        single.strand.genes.only=F)
 length(genes_658.grl)
 
-# Genes with multiple locations on standard chromosomes
+# Select genes with multiple locations 
+# (we already look within the standard chromosomes only)
 multi_genes_3.grl <- genes_658.grl[elementNROWS(genes_658.grl)>1]
 length(multi_genes_3.grl)
 multi_genes_3.grl
@@ -229,9 +243,9 @@ absent_genes_9.df
 
 ```
 
-# 655 genes list  
+# Final gene list  
 
-Includes  
+## Get 655 genes  
 
 - 628 genes with unique locations on standard chromosomes  
 - 27 genes with multiple locations, where only one of them is on standard chromosomes  
@@ -239,19 +253,47 @@ Includes
 ```{r}
 
 # Alt loci have already been removed from transcript database 
-#keepStandardChromosomes(b38.tx)
-seqlevels(b38.tx)
+#keepStandardChromosomes(tx.b38)
+seqlevels(tx.b38)
 
 # Use default genes() setting to get rid of genes with multiple locations in genome
-genes_655.gr <- genes(b38.tx, 
+genes_655.gr <- genes(tx.b38, 
                       filter=list(gene_id = genes_667.df$ENTREZID))
 length(genes_655.gr)
 
 # Sort by position
 genes_655.gr <- sort(genes_655.gr)
 
+```
+
+## Update seqinfo
+
+- Keep only standard chromosomes  
+- Switch to Seqinfo(genome="hg38"), which will be used later for reading annotated text file  
+
+```{r}
+
+# Keep only standard chromosomes:  
+# removes all ALt loci, including some that are inconsistent with Seqinfo(genome="hg38")
+# Removal of inconsistent seq-names is necessary to apply Seqinfo(genome="hg38") in the next step
+seqinfo(genes_655.gr)
+genes_655.gr <- keepStandardChromosomes(genes_655.gr)
+seqinfo(genes_655.gr)
+
+# Apply Seqinfo(genome="hg38")
+seqinfo(genes_655.gr) <- Seqinfo(genome="hg38")
+seqinfo(genes_655.gr)
+
+# Remove ALt loci again 
+# (they have been added with Seqinfo(genome="hg38") in the above step)
+genes_655.gr <- keepStandardChromosomes(genes_655.gr)
+seqinfo(genes_655.gr)
+
 # Check result
 genes_655.gr
+
+# Clean-up
+rm(tx.b38)
 
 ```
 

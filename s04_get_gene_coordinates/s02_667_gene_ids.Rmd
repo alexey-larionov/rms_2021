@@ -57,6 +57,14 @@ setwd(working_folder)
 #BiocManager::install("org.Hs.eg.db")
 library(org.Hs.eg.db)
 
+# An alternative package to link Symbol to Ens or EntrezID
+# might be from Ensembl: 
+# The latest b38 Ensembl db (in Feb2021) is v86
+#BiocManager::install("EnsDb.Hsapiens.v86")
+#library(EnsDb.Hsapiens.v86)
+#EnsDb.Hsapiens.v86
+#columns(EnsDb.Hsapiens.v86)
+
 ```
 
 # Read gene names

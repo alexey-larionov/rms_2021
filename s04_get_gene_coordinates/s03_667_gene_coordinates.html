@@ -11,7 +11,7 @@
 
 <meta name="author" content="Alexey Larionov" />
 
-<meta name="date" content="2021-02-20" />
+<meta name="date" content="2021-02-22" />
 
 <title>Get coordinates of 667 genes</title>
 
@@ -272,7 +272,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Get coordinates of 667 genes</h1>
 <h4 class="author">Alexey Larionov</h4>
-<h4 class="date">20 Feb 2021</h4>
+<h4 class="date">22 Feb 2021</h4>
 
 </div>
 
@@ -292,6 +292,8 @@ div.tocify {
 <li>SSX2 (6757) X+ and X-</li>
 </ul>
 <p>Coordinates for such genes could be dealt with on an ad-hoc basis. In this script these 3 genes are just excluded from the final list.</p>
+<p>Finally, when the final GRanges for down-stream analysis is made its seqlevels are explicitly limited to standard chromosomes and updated with information from Seqlevels(genome=&quot;hg38&quot;). The same seqlevels will be later used when reading the annotated text files. Keeping the seqlevels consistent is good for awoiding warnings during overlap or concatenation of the GRanges.</p>
+<p>The script uses <em>elementNROWS()</em>, <em>stack()</em>, <em>keepStandardChromosomes()</em> and <em>Seqinfo(genome=&quot;hg38&quot;)</em> that are defined for GRanges/GRanges/Annotations. See help for more detail.</p>
 </div>
 <div id="start-section" class="section level1">
 <h1><span class="header-section-number">2</span> Start section</h1>
@@ -306,7 +308,7 @@ pre code {
 </style>
 <pre class="r"><code># Time stamp
 Sys.time()</code></pre>
-<pre><code>## [1] &quot;2021-02-20 14:50:36 GMT&quot;</code></pre>
+<pre><code>## [1] &quot;2021-02-22 09:58:07 GMT&quot;</code></pre>
 <pre class="r"><code># Clenan-up
 rm(list=ls())
 graphics.off()
@@ -314,8 +316,8 @@ graphics.off()
 # Memory
 gc()</code></pre>
 <pre><code>##          used (Mb) gc trigger (Mb) limit (Mb) max used (Mb)
-## Ncells 414805 22.2     864398 46.2         NA   641517 34.3
-## Vcells 787613  6.1    8388608 64.0      16384  1768547 13.5</code></pre>
+## Ncells 414853 22.2     864535 46.2         NA   641517 34.3
+## Vcells 788132  6.1    8388608 64.0      16384  1768567 13.5</code></pre>
 <pre class="r"><code># Options
 options(stringsAsFactors=F)
 
@@ -338,7 +340,14 @@ library(dplyr)</code></pre>
 <div id="transcripts-database" class="section level1">
 <h1><span class="header-section-number">3</span> Transcripts database</h1>
 <p>This database package is used to retrieve coordinates of human transcripts; also it provides exones and CDS; the genes are given by entrez-ids</p>
-<pre class="r"><code>#BiocManager::install(&quot;TxDb.Hsapiens.UCSC.hg38.knownGene&quot;)
+<pre class="r"><code># An alternative b38 package might be from Ensembl
+# The latest b38 Ensembl db (in Feb2021) is v86
+#BiocManager::install(&quot;EnsDb.Hsapiens.v86&quot;)
+#library(EnsDb.Hsapiens.v86)
+#EnsDb.Hsapiens.v86
+#columns(EnsDb.Hsapiens.v86)
+
+#BiocManager::install(&quot;TxDb.Hsapiens.UCSC.hg38.knownGene&quot;)
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)</code></pre>
 <pre><code>## Loading required package: GenomicFeatures</code></pre>
 <pre><code>## Loading required package: BiocGenerics</code></pre>
@@ -388,10 +397,10 @@ library(TxDb.Hsapiens.UCSC.hg38.knownGene)</code></pre>
 ## 
 ##     select</code></pre>
 <pre class="r"><code># Connect to the database
-b38.tx &lt;- TxDb.Hsapiens.UCSC.hg38.knownGene
+tx.b38 &lt;- TxDb.Hsapiens.UCSC.hg38.knownGene
 
 # Check connection
-b38.tx</code></pre>
+tx.b38</code></pre>
 <pre><code>## TxDb object:
 ## # Db type: TxDb
 ## # Supporting package: GenomicFeatures
@@ -413,15 +422,15 @@ b38.tx</code></pre>
 ## # GenomicFeatures version at creation time: 1.37.4
 ## # RSQLite version at creation time: 2.1.2
 ## # DBSCHEMAVERSION: 1.2</code></pre>
-<pre class="r"><code>length(seqlevels(b38.tx))</code></pre>
+<pre class="r"><code>length(seqlevels(tx.b38))</code></pre>
 <pre><code>## [1] 595</code></pre>
-<pre class="r"><code>seqlevels(b38.tx)[1:30]</code></pre>
+<pre class="r"><code>seqlevels(tx.b38)[1:30]</code></pre>
 <pre><code>##  [1] &quot;chr1&quot;                   &quot;chr2&quot;                   &quot;chr3&quot;                   &quot;chr4&quot;                   &quot;chr5&quot;                   &quot;chr6&quot;                   &quot;chr7&quot;                   &quot;chr8&quot;                   &quot;chr9&quot;                   &quot;chr10&quot;                  &quot;chr11&quot;                  &quot;chr12&quot;                  &quot;chr13&quot;                  &quot;chr14&quot;                  &quot;chr15&quot;                  &quot;chr16&quot;                  &quot;chr17&quot;                  &quot;chr18&quot;                  &quot;chr19&quot;                  &quot;chr20&quot;                  &quot;chr21&quot;                  &quot;chr22&quot;                  &quot;chrX&quot;                   &quot;chrY&quot;                   &quot;chrM&quot;                   &quot;chr1_GL383518v1_alt&quot;    &quot;chr1_GL383519v1_alt&quot;    &quot;chr1_GL383520v2_alt&quot;    &quot;chr1_KI270706v1_random&quot; &quot;chr1_KI270707v1_random&quot;</code></pre>
-<pre class="r"><code>columns(b38.tx)</code></pre>
+<pre class="r"><code>columns(tx.b38)</code></pre>
 <pre><code>##  [1] &quot;CDSCHROM&quot;   &quot;CDSEND&quot;     &quot;CDSID&quot;      &quot;CDSNAME&quot;    &quot;CDSPHASE&quot;   &quot;CDSSTART&quot;   &quot;CDSSTRAND&quot;  &quot;EXONCHROM&quot;  &quot;EXONEND&quot;    &quot;EXONID&quot;     &quot;EXONNAME&quot;   &quot;EXONRANK&quot;   &quot;EXONSTART&quot;  &quot;EXONSTRAND&quot; &quot;GENEID&quot;     &quot;TXCHROM&quot;    &quot;TXEND&quot;      &quot;TXID&quot;       &quot;TXNAME&quot;     &quot;TXSTART&quot;    &quot;TXSTRAND&quot;   &quot;TXTYPE&quot;</code></pre>
 <pre class="r"><code># This command can be used to keep only standard chromosomes
 # (i.e. to remove Alt loci)
-#keepStandardChromosomes(b38.tx)</code></pre>
+#keepStandardChromosomes(tx.b38)</code></pre>
 </div>
 <div id="read-667-genes" class="section level1">
 <h1><span class="header-section-number">4</span> Read 667 genes</h1>
@@ -449,10 +458,10 @@ working_folder=file.path(base_folder,&quot;s04_get_gene_coordinates&quot;)</code
 <ul>
 <li>pseudogenes<br />
 </li>
-<li>loci that have combinatorial transcription, e.g. receptors and molecules related to immune responce</li>
+<li>loci that may have a sort of combinatorial transcription, e.g. receptors and molecules related to immune response</li>
 </ul>
 <p>Thus, some genes included in 667 list are not retrieved by the default <em>genes()</em> call.</p>
-<pre class="r"><code>genes_628.gr &lt;- genes(b38.tx, 
+<pre class="r"><code>genes_628.gr &lt;- genes(tx.b38, 
                       filter=list(gene_id = genes_667.df$ENTREZID))
 
 length(genes_628.gr)</code></pre>
@@ -477,10 +486,10 @@ length(genes_628.gr)</code></pre>
 </div>
 <div id="genes-with-multiple-locations-in-ref-genome" class="section level2">
 <h2><span class="header-section-number">5.2</span> 30 genes with multiple locations in Ref genome</h2>
-<p>To show all genes present in the database, the dafult <em>genes()</em> settings should be overwritten by <strong>single.strand.genes.only=F</strong>.</p>
-<p>Importantly, the output will change from <em>genomic ranges</em> to <em>genomic ranges</em> <strong>list</strong>: one <em>geniomic ranges</em> obgect per gene, where some genes are presented by several ranges.</p>
+<p>To show all genes present in the database, <em>genes()</em> should be run with option <strong>single.strand.genes.only=F</strong>.</p>
+<p>This will retrieve all the genes, which are present in the tx.db. However, the output will change from <em>genomic ranges</em> to <em>genomic ranges</em> <strong>list</strong>: one <em>geniomic ranges</em> obgect per gene, where some genes are presented by several ranges.</p>
 <pre class="r"><code># Get genes from our list
-genes_658.grl &lt;- genes(b38.tx, 
+genes_658.grl &lt;- genes(tx.b38, 
                        filter=list(gene_id = genes_667.df$ENTREZID), 
                        single.strand.genes.only=F)
 
@@ -576,11 +585,18 @@ multi_genes_30.df &lt;- left_join(multi_genes_30.df,genes_667.df)</code></pre>
 </div>
 <div id="genes-with-multiple-locations-on-standard-chromosomes" class="section level2">
 <h2><span class="header-section-number">5.3</span> 3 Genes with multiple locations on standard chromosomes</h2>
-<p>P2RY8 (286530) X and Y CRLF2 (64109) X and Y SSX2 (6757) X+ and X-</p>
+<p>After removing Alt loci from the tx.db, we still have 3 genes with multiple locations:</p>
+<ul>
+<li>P2RY8 (286530) X and Y<br />
+</li>
+<li>CRLF2 (64109) X and Y<br />
+</li>
+<li>SSX2 (6757) X+ and X-</li>
+</ul>
 <pre class="r"><code># Remove Alt loci from transcript database: keep only standard chromosomes
 # Note using keepStandardChromosomes() function that is available for 
 # Annortation-databases instead of my previous manual handling of this step
-keepStandardChromosomes(b38.tx)</code></pre>
+keepStandardChromosomes(tx.b38)</code></pre>
 <pre><code>## TxDb object:
 ## # Db type: TxDb
 ## # Supporting package: GenomicFeatures
@@ -602,15 +618,16 @@ keepStandardChromosomes(b38.tx)</code></pre>
 ## # GenomicFeatures version at creation time: 1.37.4
 ## # RSQLite version at creation time: 2.1.2
 ## # DBSCHEMAVERSION: 1.2</code></pre>
-<pre class="r"><code>seqlevels(b38.tx)</code></pre>
+<pre class="r"><code>seqlevels(tx.b38)</code></pre>
 <pre><code>##  [1] &quot;chr1&quot;  &quot;chr2&quot;  &quot;chr3&quot;  &quot;chr4&quot;  &quot;chr5&quot;  &quot;chr6&quot;  &quot;chr7&quot;  &quot;chr8&quot;  &quot;chr9&quot;  &quot;chr10&quot; &quot;chr11&quot; &quot;chr12&quot; &quot;chr13&quot; &quot;chr14&quot; &quot;chr15&quot; &quot;chr16&quot; &quot;chr17&quot; &quot;chr18&quot; &quot;chr19&quot; &quot;chr20&quot; &quot;chr21&quot; &quot;chr22&quot; &quot;chrX&quot;  &quot;chrY&quot;  &quot;chrM&quot;</code></pre>
-<pre class="r"><code># Get genes from 667 list with transcripts on standard chromosomes
-genes_658.grl &lt;- genes(b38.tx, 
+<pre class="r"><code># Get all genes from 667 list with transcripts on standard chromosomes
+genes_658.grl &lt;- genes(tx.b38, 
                        filter=list(gene_id = genes_667.df$ENTREZID), 
                        single.strand.genes.only=F)
 length(genes_658.grl)</code></pre>
 <pre><code>## [1] 658</code></pre>
-<pre class="r"><code># Genes with multiple locations on standard chromosomes
+<pre class="r"><code># Select genes with multiple locations 
+# (we already look within the standard chromosomes only)
 multi_genes_3.grl &lt;- genes_658.grl[elementNROWS(genes_658.grl)&gt;1]
 length(multi_genes_3.grl)</code></pre>
 <pre><code>## [1] 3</code></pre>
@@ -680,27 +697,100 @@ dim(absent_genes_9.df)</code></pre>
 ## 628    TRG     6965</code></pre>
 </div>
 </div>
-<div id="genes-list" class="section level1">
-<h1><span class="header-section-number">6</span> 655 genes list</h1>
-<p>Includes</p>
+<div id="final-gene-list" class="section level1">
+<h1><span class="header-section-number">6</span> Final gene list</h1>
+<div id="get-655-genes" class="section level2">
+<h2><span class="header-section-number">6.1</span> Get 655 genes</h2>
 <ul>
 <li>628 genes with unique locations on standard chromosomes<br />
 </li>
 <li>27 genes with multiple locations, where only one of them is on standard chromosomes</li>
 </ul>
 <pre class="r"><code># Alt loci have already been removed from transcript database 
-#keepStandardChromosomes(b38.tx)
-seqlevels(b38.tx)</code></pre>
+#keepStandardChromosomes(tx.b38)
+seqlevels(tx.b38)</code></pre>
 <pre><code>##  [1] &quot;chr1&quot;  &quot;chr2&quot;  &quot;chr3&quot;  &quot;chr4&quot;  &quot;chr5&quot;  &quot;chr6&quot;  &quot;chr7&quot;  &quot;chr8&quot;  &quot;chr9&quot;  &quot;chr10&quot; &quot;chr11&quot; &quot;chr12&quot; &quot;chr13&quot; &quot;chr14&quot; &quot;chr15&quot; &quot;chr16&quot; &quot;chr17&quot; &quot;chr18&quot; &quot;chr19&quot; &quot;chr20&quot; &quot;chr21&quot; &quot;chr22&quot; &quot;chrX&quot;  &quot;chrY&quot;  &quot;chrM&quot;</code></pre>
 <pre class="r"><code># Use default genes() setting to get rid of genes with multiple locations in genome
-genes_655.gr &lt;- genes(b38.tx, 
+genes_655.gr &lt;- genes(tx.b38, 
                       filter=list(gene_id = genes_667.df$ENTREZID))
 length(genes_655.gr)</code></pre>
 <pre><code>## [1] 655</code></pre>
 <pre class="r"><code># Sort by position
-genes_655.gr &lt;- sort(genes_655.gr)
-
-# Check result
+genes_655.gr &lt;- sort(genes_655.gr)</code></pre>
+</div>
+<div id="update-seqinfo" class="section level2">
+<h2><span class="header-section-number">6.2</span> Update seqinfo</h2>
+<ul>
+<li>Keep only standard chromosomes<br />
+</li>
+<li>Switch to Seqinfo(genome=&quot;hg38&quot;), which will be used later for reading annotated text file</li>
+</ul>
+<pre class="r"><code># Keep only standard chromosomes:  
+# removes all ALt loci, including some that are inconsistent with Seqinfo(genome=&quot;hg38&quot;)
+# Removal of inconsistent seq-names is necessary to apply Seqinfo(genome=&quot;hg38&quot;) in the next step
+seqinfo(genes_655.gr)</code></pre>
+<pre><code>## Seqinfo object with 25 sequences (1 circular) from hg38 genome:
+##   seqnames seqlengths isCircular genome
+##   chr1      248956422       &lt;NA&gt;   hg38
+##   chr2      242193529       &lt;NA&gt;   hg38
+##   chr3      198295559       &lt;NA&gt;   hg38
+##   chr4      190214555       &lt;NA&gt;   hg38
+##   chr5      181538259       &lt;NA&gt;   hg38
+##   ...             ...        ...    ...
+##   chr21      46709983       &lt;NA&gt;   hg38
+##   chr22      50818468       &lt;NA&gt;   hg38
+##   chrX      156040895       &lt;NA&gt;   hg38
+##   chrY       57227415       &lt;NA&gt;   hg38
+##   chrM          16569       TRUE   hg38</code></pre>
+<pre class="r"><code>genes_655.gr &lt;- keepStandardChromosomes(genes_655.gr)
+seqinfo(genes_655.gr)</code></pre>
+<pre><code>## Seqinfo object with 25 sequences (1 circular) from hg38 genome:
+##   seqnames seqlengths isCircular genome
+##   chr1      248956422       &lt;NA&gt;   hg38
+##   chr2      242193529       &lt;NA&gt;   hg38
+##   chr3      198295559       &lt;NA&gt;   hg38
+##   chr4      190214555       &lt;NA&gt;   hg38
+##   chr5      181538259       &lt;NA&gt;   hg38
+##   ...             ...        ...    ...
+##   chr21      46709983       &lt;NA&gt;   hg38
+##   chr22      50818468       &lt;NA&gt;   hg38
+##   chrX      156040895       &lt;NA&gt;   hg38
+##   chrY       57227415       &lt;NA&gt;   hg38
+##   chrM          16569       TRUE   hg38</code></pre>
+<pre class="r"><code># Apply Seqinfo(genome=&quot;hg38&quot;)
+seqinfo(genes_655.gr) &lt;- Seqinfo(genome=&quot;hg38&quot;)
+seqinfo(genes_655.gr)</code></pre>
+<pre><code>## Seqinfo object with 455 sequences (1 circular) from hg38 genome:
+##   seqnames         seqlengths isCircular genome
+##   chr1              248956422      FALSE   hg38
+##   chr2              242193529      FALSE   hg38
+##   chr3              198295559      FALSE   hg38
+##   chr4              190214555      FALSE   hg38
+##   chr5              181538259      FALSE   hg38
+##   ...                     ...        ...    ...
+##   chrUn_KI270753v1      62944      FALSE   hg38
+##   chrUn_KI270754v1      40191      FALSE   hg38
+##   chrUn_KI270755v1      36723      FALSE   hg38
+##   chrUn_KI270756v1      79590      FALSE   hg38
+##   chrUn_KI270757v1      71251      FALSE   hg38</code></pre>
+<pre class="r"><code># Remove ALt loci again 
+# (they have been added with Seqinfo(genome=&quot;hg38&quot;) in the above step)
+genes_655.gr &lt;- keepStandardChromosomes(genes_655.gr)
+seqinfo(genes_655.gr)</code></pre>
+<pre><code>## Seqinfo object with 25 sequences (1 circular) from hg38 genome:
+##   seqnames seqlengths isCircular genome
+##   chr1      248956422      FALSE   hg38
+##   chr2      242193529      FALSE   hg38
+##   chr3      198295559      FALSE   hg38
+##   chr4      190214555      FALSE   hg38
+##   chr5      181538259      FALSE   hg38
+##   ...             ...        ...    ...
+##   chr21      46709983      FALSE   hg38
+##   chr22      50818468      FALSE   hg38
+##   chrX      156040895      FALSE   hg38
+##   chrY       57227415      FALSE   hg38
+##   chrM          16569       TRUE   hg38</code></pre>
+<pre class="r"><code># Check result
 genes_655.gr</code></pre>
 <pre><code>## GRanges object with 655 ranges and 1 metadata column:
 ##         seqnames              ranges strand |     gene_id
@@ -718,6 +808,9 @@ genes_655.gr</code></pre>
 ##    6736     chrY     2786855-2787682      - |        6736
 ##   -------
 ##   seqinfo: 25 sequences (1 circular) from hg38 genome</code></pre>
+<pre class="r"><code># Clean-up
+rm(tx.b38)</code></pre>
+</div>
 </div>
 <div id="add-symbols" class="section level1">
 <h1><span class="header-section-number">7</span> Add symbols</h1>
@@ -779,7 +872,7 @@ rm(genes_655.df)</code></pre>
 <div id="final-section" class="section level1">
 <h1><span class="header-section-number">9</span> Final section</h1>
 <pre class="r"><code>ls()</code></pre>
-<pre><code>##  [1] &quot;absent_genes_9.df&quot;  &quot;b38.tx&quot;             &quot;base_folder&quot;        &quot;genes_628.gr&quot;       &quot;genes_655.gr&quot;       &quot;genes_658.grl&quot;      &quot;genes_667.df&quot;       &quot;multi_genes_3.df&quot;   &quot;multi_genes_3.grl&quot;  &quot;multi_genes_30.df&quot;  &quot;multi_genes_30.grl&quot; &quot;working_folder&quot;</code></pre>
+<pre><code>##  [1] &quot;absent_genes_9.df&quot;  &quot;base_folder&quot;        &quot;genes_628.gr&quot;       &quot;genes_655.gr&quot;       &quot;genes_658.grl&quot;      &quot;genes_667.df&quot;       &quot;multi_genes_3.df&quot;   &quot;multi_genes_3.grl&quot;  &quot;multi_genes_30.df&quot;  &quot;multi_genes_30.grl&quot; &quot;working_folder&quot;</code></pre>
 <pre class="r"><code>sessionInfo()</code></pre>
 <pre><code>## R version 3.6.2 (2019-12-12)
 ## Platform: x86_64-apple-darwin15.6.0 (64-bit)
@@ -802,11 +895,11 @@ rm(genes_655.df)</code></pre>
 ##  [1] Rcpp_1.0.6                  lattice_0.20-41             prettyunits_1.1.1           Rsamtools_2.2.3             Biostrings_2.54.0           assertthat_0.2.1            digest_0.6.27               BiocFileCache_1.10.2        R6_2.5.0                    RSQLite_2.2.3               evaluate_0.14               httr_1.4.2                  pillar_1.4.7                zlibbioc_1.32.0             rlang_0.4.10                progress_1.2.2              curl_4.3                    blob_1.2.1                  Matrix_1.3-2                rmarkdown_2.6               BiocParallel_1.20.1         stringr_1.4.0               RCurl_1.98-1.2              bit_4.0.4                   biomaRt_2.42.1              DelayedArray_0.12.3         compiler_3.6.2              rtracklayer_1.46.0          xfun_0.21                   pkgconfig_2.0.3             askpass_1.1                 htmltools_0.5.1.1           openssl_1.4.3               tidyselect_1.1.0            SummarizedExperiment_1.16.1
 ## [36] tibble_3.0.6                GenomeInfoDbData_1.2.2      matrixStats_0.58.0          XML_3.99-0.3                crayon_1.4.1                dbplyr_2.1.0                GenomicAlignments_1.22.1    bitops_1.0-6                rappdirs_0.3.3              grid_3.6.2                  lifecycle_1.0.0             DBI_1.1.1                   magrittr_2.0.1              stringi_1.5.3               cachem_1.0.4                XVector_0.26.0              ellipsis_0.3.1              generics_0.1.0              vctrs_0.3.6                 tools_3.6.2                 bit64_4.0.5                 glue_1.4.2                  purrr_0.3.4                 hms_1.0.0                   fastmap_1.1.0               yaml_2.2.1                  memoise_2.0.0               knitr_1.31</code></pre>
 <pre class="r"><code>Sys.time()</code></pre>
-<pre><code>## [1] &quot;2021-02-20 14:50:46 GMT&quot;</code></pre>
+<pre><code>## [1] &quot;2021-02-22 09:58:21 GMT&quot;</code></pre>
 <pre class="r"><code>gc()</code></pre>
 <pre><code>##            used  (Mb) gc trigger  (Mb) limit (Mb) max used  (Mb)
-## Ncells  7141723 381.5   13460297 718.9         NA 11732137 626.6
-## Vcells 12364198  94.4   21468864 163.8      16384 17823881 136.0</code></pre>
+## Ncells  7155158 382.2   13459930 718.9         NA 12051825 643.7
+## Vcells 12394151  94.6   21468864 163.8      16384 17824047 136.0</code></pre>
 </div>
 
 
