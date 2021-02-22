@@ -13,41 +13,44 @@ editor_options:
 
 # Summary
 
-- Read source data to GRanges  
-    + 655 genes with coordinates: alteady in GRanges (using Seqinfo(genome="hg38"))
-    + two Zhang samples: convert to GRanges using the same Seqinfo as in the 655 genes  
+- Read two Zhang samples to GRanges  
 - Preprocess  
-    + Select variants on standard chromosomes  
-    + Select variants overlapping with 655 genes  
-    + Exclude common variants (MAF > 0.5)  
+  + Select variants on standard chromosomes  
+  + Select variants overlapping with 161 genes  
+  + Exclude common variants (MAF > 0.5)  
 - Split x and y to subsets
-    + Make Chr_Start_Ref_Alt key
-    + Make subsets: unique x, y and overlap of x and y  
-- Select variant annotations
-    + Make vector of stable variant annotations to keep in GRanges  
-    + Make NA matrices for sample-specific variant annotations  
+  + Make Chr_Start_Ref_Alt key
+  + Make subsets: unique x, y and overlap of x and y  
+- Prepare merging
+  + Make vector of variant annotations to keep in GRanges  
+  + Make NA matrices for sample-specific variant annotations  
 - Process unique x and y
-    + Make GRanges for unique x and y  
-    + Capture sample-specific annotations to the matrices  
+  + Make GRanges for unique x and y  
+  + Capture sample-specific annotations to the matrices  
 - Porcess overlapping X and y  
-    + Make GRange for intersect of x and y  
-    + Capture sample-specific annotations to the matrices  
-- Combine all variants  
-    + Merge unique and overlapping GRanges  
-    + Reorder to match records in matrices  
-- Cast to SummarisedExperiment class ??  
+  + Make GRange for intersect of x and y  
+  + Capture sample-specific annotations to the matrices  
+- Merge 
+  + Merge unique and overlapping GRanges  
+  + Reorder to match records in matrices  
+- Cast to SummarisedExperiment class ?  
 
-In case of further development of this approach for GRanges merging, the following points could be kept in mind:  
+## notes
 
-- Change of the **data type**  
-    + merge(GRanges) -> SummarisedExperiment  
-- Flexibility of selecting the **key** for subsetting  
-    + Key used in this example includes a combination of position and metadata: Position, Ref and ALt  
-    + Alternatively it could be different overlaps by positions: any, start, start+end, etc  
-- Flexibility of selecting **anotations** to keep  
-    + In this example we manually selected the columns to keep and their types (stable or sample-specific)  
-    + Alternatively, all meta-data columns could be processed fully automatically  
-    + It could also be done in a mixed mode: some fields are specified manually with their types, and the rest is processed automatically  
+BASS Annotations in different text files can be different
+so, selecting missenses and in-frames should be done in individual samples level
+
+Then a minimal necessary set of metadata should be kept that are the same for any sample: 
+e.g. only Ref and Alt ??? 
+
+Use overlap type="equal"? 
+
+subsetByOverlaps(gr12,setdiff(gr12,gr23))
+
+re these euqal for metadata and for coordinates?
+
+subsetByOverlaps(gr12,intersect(gr12,gr23)) 
+subsetByOverlaps(gr23,intersect(gr12,gr23))
 
 # Start section
 
@@ -62,7 +65,7 @@ pre code {
 </style>
 
 ```{r echo=F}
-options(width = 999)
+#options(width = 999)
 ```
 
 ```{r}
@@ -88,8 +91,6 @@ setwd(scripts_fiolder)
 
 # Libraries
 library(GenomicRanges)
-library(VennDiagram)
-library(SummarizedExperiment)
 
 ```
 
@@ -182,33 +183,23 @@ g <- genes_655.gr
 
 # Keep only variants on standard chromosomes
 x <- keepStandardChromosomes(x, pruning.mode="coarse")
-summary(x)
-seqinfo(x)
 x[,1:2]
 
 y <- keepStandardChromosomes(y, pruning.mode="coarse")
-summary(y)
-seqinfo(y)
 y[,1:2]
   
-# Overlap with the genes list
-head(g)
+# Overlap with the gene list
 x <- subsetByOverlaps(x, g, type="any")
-summary(x)
-
 y <- subsetByOverlaps(y, g, type="any")
-summary(y)  
-
+  
 # Exclude common variants (MAF > 0.5)
 x <- x[x$gnomAD_genome_ALL <= 0.05 | 
        x$gnomAD_genome_ALL >= 0.95 | 
        is.na(x$gnomAD_genome_ALL)]
-summary(x)
 
 y <- y[y$gnomAD_genome_ALL <= 0.05 | 
        y$gnomAD_genome_ALL >= 0.95 | 
        is.na(y$gnomAD_genome_ALL)]
-summary(y)
 
 # Clean-up
 rm(g, genes_655.gr)
@@ -290,20 +281,13 @@ length(intersect_xy)
 union_xy <- union(x$var_id, y$var_id)
 length(union_xy)
 
-z <- venn.diagram(list(sample1=x$var_id, sample2=y$var_id),
-                  filename=NULL);
-
-grid.draw(z)
-
 #length(c(unique_x,unique_y,intersect_xy)) == length(union_xy)
-
-rm(z)
 
 ```
 
-# Select variant annotations
+# Select annotations
 
-## Sample-independent (stable) variant annotations
+## Stable annotations
 
 These variant annotations should not change sample to sample, e.g. Ref, ALt, Gene name etc.  Such annotations will be kept within metadata of the merged GRanges object.  
 
@@ -325,11 +309,17 @@ stable_annotations <- c("var_id",
 
 ```
 
-## Sample-specific variant annotations
+## Unstable annotations
 
 These variant annotations may change from sample to sample, such as Genotype or Drepth etc.  Such annotations will be captured and stored in additional matrices, syncronised with the GRanges object.  
 
+Eventually this combination of matrices and GRanges resembles **SummarizedExperiment** class, which might be added here later for consistency with existent Bioconductor approaches:  
+
+http://bioconductor.org/packages/release/bioc/html/SummarizedExperiment.html  
+
 ```{r}
+
+# Unstable annotations
 
 # Score
 score.mx <- matrix(NA,ncol=2,nrow=length(union_xy))
@@ -378,15 +368,13 @@ gt.mx[unique_x,"s1"] <- as.data.frame(x[unique_x,])$GT
 score.mx[unique_y,"s2"] <- as.data.frame(y[unique_y,])$Score
 gt.mx[unique_y,"s2"] <- as.data.frame(y[unique_y,])$GT
 
-rm(unique_x,unique_y)
-
 ```
 
 # Process overlapping variants
 
 ## Granges
 
-Check that the stable annotations are the same before making GRange  
+It may be simplifyed by removing the consistency check  
 
 ```{r}
 
@@ -406,7 +394,7 @@ if (!all(intersect_x.gr==intersect_y.gr)) {
 intersect_xy.gr <- intersect_x.gr
 
 # Clean-up
-rm(intersect_x.gr,intersect_y.gr,stable_annotations)
+rm(intersect_x.gr,intersect_y.gr)
 
 ```
 
@@ -414,13 +402,11 @@ rm(intersect_x.gr,intersect_y.gr,stable_annotations)
 
 ```{r}
 
-score.mx[intersect_xy,"s1"] <- as.data.frame(x[intersect_xy,])$Score
-gt.mx[intersect_xy,"s1"] <- as.data.frame(x[intersect_xy,])$GT
+score.mx[unique_x,"s1"] <- as.data.frame(x[unique_x,])$Score
+gt.mx[unique_x,"s1"] <- as.data.frame(x[unique_x,])$GT
 
-score.mx[intersect_xy,"s2"] <- as.data.frame(y[intersect_xy,])$Score
-gt.mx[intersect_xy,"s2"] <- as.data.frame(y[intersect_xy,])$GT
-
-rm(intersect_xy,x,y)
+score.mx[unique_y,"s2"] <- as.data.frame(y[unique_y,])$Score
+gt.mx[unique_y,"s2"] <- as.data.frame(y[unique_y,])$GT
 
 ```
 
@@ -436,63 +422,12 @@ xy.gr <- xy.gr[union_xy]
 
 # Check result
 summary(xy.gr)
-seqinfo(xy.gr)
+seqlevels(xy.gr)
 
 # Compare with matrices
 xy.gr[,1:2]
 score.mx[1:5,]
 gt.mx[1:5,]
-
-# Clean-up
-rm(union_xy,unique_x.gr,unique_y.gr,intersect_xy.gr)
-
-```
-
-# Save to SummarizedExperiment  
-
-The combination of matrices and GRanges may be stored in **SummarizedExperiment** class for consistency with existent Bioconductor solutions:  
-
-- http://bioconductor.org/packages/release/bioc/html/SummarizedExperiment.html  
-- http://bioconductor.org/packages/release/bioc/vignettes/SummarizedExperiment/inst/doc/SummarizedExperiment.html#constructing-a-summarizedexperiment  
-
-```{r}
-
-# Check that objects are in sync
-if (any(colnames(gt.mx) != colnames(score.mx))) {
-  stop("Matrices have different samples", ok)
-}
-
-if (any(rownames(gt.mx) != rownames(score.mx))) {
-  stop("Matrices have different variants", ok)
-}
-
-if (any(names(xy.gr) != rownames(gt.mx))) {
-  stop("Matrices and GRanges have different variants", ok)
-}
-
-# Prepare samples info
-samples <- colnames(gt.mx)
-samples.df <- DataFrame(id=samples, study="zheng", row.names=samples)
-samples.df
-
-# Put all data to a SummarizedExperiment container
-merged.se <- SummarizedExperiment(assays=list(genotypes=gt.mx,scores=score.mx),
-                     rowRanges=xy.gr, colData=samples.df)
-
-# Explore result
-merged.se
-
-head(assays(merged.se)$scores)
-dim(assays(merged.se)$scores)
-
-head(assays(merged.se)$genotypes) 
-dim(assays(merged.se)$genotypes)
-
-rowRanges(merged.se)[,1:2]
-colData(merged.se)
-
-# Clean-up
-rm(samples,samples.df,xy.gr,gt.mx,score.mx)
 
 ```
 
@@ -500,7 +435,7 @@ rm(samples,samples.df,xy.gr,gt.mx,score.mx)
 
 ```{r}
 
-save.image("s01_combine_two_samples.RData")
+save.image("s01_read_annotated_txt_to_granges.RData")
 
 ```
 
@@ -514,3 +449,100 @@ Sys.time()
 gc()
 
 ```
+
+# etc
+
+```{r}
+library(GenomicRanges)
+
+gr12 <- GRanges(seqnames = c("chr1", "chr2"),
+             ranges = IRanges(c(1, 11), c(11, 20)),
+             seqinfo = Seqinfo(c("chr1", "chr2", "chr3")),
+             score = c("a","b"))
+
+gr23 <- GRanges(seqnames = c("chr2", "chr3"),
+             ranges = IRanges(c(11, 21), c(20, 30)),
+             seqinfo = Seqinfo(c("chr1", "chr2", "chr3")),
+             score = c("b","c"))
+
+gr12
+gr23
+
+BASS Annotations in different text files can be different
+
+subsetByOverlaps(gr12,setdiff(gr12,gr23))
+
+# Are these euqal for metadata and for coordinates?
+subsetByOverlaps(gr12,intersect(gr12,gr23))
+subsetByOverlaps(gr23,intersect(gr12,gr23))
+
+subsetByOverlaps(gr23,setdiff(gr23,gr12))
+
+
+u <- union(x,y)
+?findOverlaps
+queryHits(overlapsAny(u, x))
+
+elementMetadata(u[overlapsAny(u, x)])$x = elementMetadata(gr1)[,1]
+
+elementMetadata(u[overlapsAny(u, gr2)])$gr2 = elementMetadata(gr2)[,1]
+
+subsetByOverlaps(gr23,setdiff(gr23,gr12))
+
+x <- GRanges(seqnames = c("chr1", "chr2"),
+               ranges = IRanges(c(1, 11), c(11, 20)))
+
+y <- GRanges(seqnames = c("chr2", "chr3"),
+               ranges = IRanges(c(11, 21), c(20, 30)))
+x
+y
+union(x,y)
+
+```
+
+
+```{r}
+
+install.packages("SparseSummarizedExperiment")
+
+```
+
+
+# Web examples
+
+## Approach by Pete Haitch  
+
+Its a package available on the author's page on GitHub.  
+However, it has not been submitted to Bioconductor or CRAN.    
+Also, it has not been developed for several years (since 2015).  
+
+https://github.com/PeteHaitch/SparseSummarizedExperiment/blob/master/ideas/combining-SummarizedExperiment-objects.Rmd  
+
+```{r eval=F}
+
+setMethod("combine", c("GRanges", "GRanges"),
+          function(x, y, ...) {
+            
+            if (length(y) == 0L) {
+              return(x)
+            } else if (length(x) == 0L) {
+              return(y)
+            }
+            
+            if (is.null(names(x)) || is.null(names(y))) {
+              stop("'names' of 'x' and 'y' must be non-NULL")
+            }
+            shared_elements <- intersect(names(x), names(y))
+            ok <- all.equal(x[shared_elements], y[shared_elements])
+            if (!isTRUE(ok)) {
+              stop("GRanges shared elements differ: ", ok)
+            }
+            c(x, y[setdiff(names(y), shared_elements)], ignore.mcols = FALSE)
+          }
+)
+
+```
+
+## Another example of merging GRanges
+
+https://support.bioconductor.org/p/87075/  

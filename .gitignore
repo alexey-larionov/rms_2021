@@ -1,13 +1,18 @@
 # ignore everything
+#------------------
 *
 
-# but don't ignore files ending with slash = directories
+# don't ignore
+#-------------
+
+# folders (files ending with slash)
 !*/
 
-# and don't ignore these files:
+# specific files
 !.gitignore
 !README.md
 
+# files with specific extensions
 !*.sh
 !*.log
 !*.Rmd

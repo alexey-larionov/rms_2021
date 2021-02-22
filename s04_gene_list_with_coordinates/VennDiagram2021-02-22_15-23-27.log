@@ -1,0 +1,6 @@
+INFO [2021-02-22 15:23:27] [[1]]
+INFO [2021-02-22 15:23:27] list(tx_db = entrez_id_tx.df$GENEID, org_db = entrez2symbols.df$ENTREZID)
+INFO [2021-02-22 15:23:27] 
+INFO [2021-02-22 15:23:27] $filename
+INFO [2021-02-22 15:23:27] NULL
+INFO [2021-02-22 15:23:27] 
