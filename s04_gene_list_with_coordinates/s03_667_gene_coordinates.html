@@ -308,7 +308,7 @@ pre code {
 </style>
 <pre class="r"><code># Time stamp
 Sys.time()</code></pre>
-<pre><code>## [1] &quot;2021-02-22 09:58:07 GMT&quot;</code></pre>
+<pre><code>## [1] &quot;2021-02-22 17:06:13 GMT&quot;</code></pre>
 <pre class="r"><code># Clenan-up
 rm(list=ls())
 graphics.off()
@@ -316,14 +316,14 @@ graphics.off()
 # Memory
 gc()</code></pre>
 <pre><code>##          used (Mb) gc trigger (Mb) limit (Mb) max used (Mb)
-## Ncells 414853 22.2     864535 46.2         NA   641517 34.3
-## Vcells 788132  6.1    8388608 64.0      16384  1768567 13.5</code></pre>
+## Ncells 414855 22.2     864541 46.2         NA   641517 34.3
+## Vcells 788166  6.1    8388608 64.0      16384  1768567 13.5</code></pre>
 <pre class="r"><code># Options
 options(stringsAsFactors=F)
 
 # Files and folders
-base_folder=&quot;/Users/alexey/Documents/mg/s2021/zhang_tests&quot;
-working_folder=file.path(base_folder,&quot;s04_get_gene_coordinates&quot;)
+base_folder=&quot;/Users/alexey/Documents/mg/s2021/zhang_tests/scripts&quot;
+working_folder=file.path(base_folder,&quot;s04_gene_list_with_coordinates&quot;)
 setwd(working_folder)
 
 # Libraries
@@ -426,6 +426,20 @@ tx.b38</code></pre>
 <pre><code>## [1] 595</code></pre>
 <pre class="r"><code>seqlevels(tx.b38)[1:30]</code></pre>
 <pre><code>##  [1] &quot;chr1&quot;                   &quot;chr2&quot;                   &quot;chr3&quot;                   &quot;chr4&quot;                   &quot;chr5&quot;                   &quot;chr6&quot;                   &quot;chr7&quot;                   &quot;chr8&quot;                   &quot;chr9&quot;                   &quot;chr10&quot;                  &quot;chr11&quot;                  &quot;chr12&quot;                  &quot;chr13&quot;                  &quot;chr14&quot;                  &quot;chr15&quot;                  &quot;chr16&quot;                  &quot;chr17&quot;                  &quot;chr18&quot;                  &quot;chr19&quot;                  &quot;chr20&quot;                  &quot;chr21&quot;                  &quot;chr22&quot;                  &quot;chrX&quot;                   &quot;chrY&quot;                   &quot;chrM&quot;                   &quot;chr1_GL383518v1_alt&quot;    &quot;chr1_GL383519v1_alt&quot;    &quot;chr1_GL383520v2_alt&quot;    &quot;chr1_KI270706v1_random&quot; &quot;chr1_KI270707v1_random&quot;</code></pre>
+<pre class="r"><code>seqinfo(tx.b38)</code></pre>
+<pre><code>## Seqinfo object with 595 sequences (1 circular) from hg38 genome:
+##   seqnames         seqlengths isCircular genome
+##   chr1              248956422       &lt;NA&gt;   hg38
+##   chr2              242193529       &lt;NA&gt;   hg38
+##   chr3              198295559       &lt;NA&gt;   hg38
+##   chr4              190214555       &lt;NA&gt;   hg38
+##   chr5              181538259       &lt;NA&gt;   hg38
+##   ...                     ...        ...    ...
+##   chrUn_KI270753v1      62944       &lt;NA&gt;   hg38
+##   chrUn_KI270754v1      40191       &lt;NA&gt;   hg38
+##   chrUn_KI270755v1      36723       &lt;NA&gt;   hg38
+##   chrUn_KI270756v1      79590       &lt;NA&gt;   hg38
+##   chrUn_KI270757v1      71251       &lt;NA&gt;   hg38</code></pre>
 <pre class="r"><code>columns(tx.b38)</code></pre>
 <pre><code>##  [1] &quot;CDSCHROM&quot;   &quot;CDSEND&quot;     &quot;CDSID&quot;      &quot;CDSNAME&quot;    &quot;CDSPHASE&quot;   &quot;CDSSTART&quot;   &quot;CDSSTRAND&quot;  &quot;EXONCHROM&quot;  &quot;EXONEND&quot;    &quot;EXONID&quot;     &quot;EXONNAME&quot;   &quot;EXONRANK&quot;   &quot;EXONSTART&quot;  &quot;EXONSTRAND&quot; &quot;GENEID&quot;     &quot;TXCHROM&quot;    &quot;TXEND&quot;      &quot;TXID&quot;       &quot;TXNAME&quot;     &quot;TXSTART&quot;    &quot;TXSTRAND&quot;   &quot;TXTYPE&quot;</code></pre>
 <pre class="r"><code># This command can be used to keep only standard chromosomes
@@ -438,8 +452,8 @@ tx.b38</code></pre>
 load(file.path(working_folder,&quot;s02_667_gene_ids.RData&quot;))
 
 # Update folders (just in case)
-base_folder=&quot;/Users/alexey/Documents/mg/s2021/zhang_tests&quot;
-working_folder=file.path(base_folder,&quot;s04_get_gene_coordinates&quot;)</code></pre>
+base_folder=&quot;/Users/alexey/Documents/mg/s2021/zhang_tests/scripts&quot;
+working_folder=file.path(base_folder,&quot;s04_gene_list_with_coordinates&quot;)</code></pre>
 </div>
 <div id="explore-transcripts-database" class="section level1">
 <h1><span class="header-section-number">5</span> Explore transcripts database</h1>
@@ -618,8 +632,21 @@ keepStandardChromosomes(tx.b38)</code></pre>
 ## # GenomicFeatures version at creation time: 1.37.4
 ## # RSQLite version at creation time: 2.1.2
 ## # DBSCHEMAVERSION: 1.2</code></pre>
-<pre class="r"><code>seqlevels(tx.b38)</code></pre>
-<pre><code>##  [1] &quot;chr1&quot;  &quot;chr2&quot;  &quot;chr3&quot;  &quot;chr4&quot;  &quot;chr5&quot;  &quot;chr6&quot;  &quot;chr7&quot;  &quot;chr8&quot;  &quot;chr9&quot;  &quot;chr10&quot; &quot;chr11&quot; &quot;chr12&quot; &quot;chr13&quot; &quot;chr14&quot; &quot;chr15&quot; &quot;chr16&quot; &quot;chr17&quot; &quot;chr18&quot; &quot;chr19&quot; &quot;chr20&quot; &quot;chr21&quot; &quot;chr22&quot; &quot;chrX&quot;  &quot;chrY&quot;  &quot;chrM&quot;</code></pre>
+<pre class="r"><code>#seqlevels(tx.b38)
+seqinfo(tx.b38)</code></pre>
+<pre><code>## Seqinfo object with 25 sequences (1 circular) from hg38 genome:
+##   seqnames seqlengths isCircular genome
+##   chr1      248956422       &lt;NA&gt;   hg38
+##   chr2      242193529       &lt;NA&gt;   hg38
+##   chr3      198295559       &lt;NA&gt;   hg38
+##   chr4      190214555       &lt;NA&gt;   hg38
+##   chr5      181538259       &lt;NA&gt;   hg38
+##   ...             ...        ...    ...
+##   chr21      46709983       &lt;NA&gt;   hg38
+##   chr22      50818468       &lt;NA&gt;   hg38
+##   chrX      156040895       &lt;NA&gt;   hg38
+##   chrY       57227415       &lt;NA&gt;   hg38
+##   chrM          16569       TRUE   hg38</code></pre>
 <pre class="r"><code># Get all genes from 667 list with transcripts on standard chromosomes
 genes_658.grl &lt;- genes(tx.b38, 
                        filter=list(gene_id = genes_667.df$ENTREZID), 
@@ -710,6 +737,20 @@ dim(absent_genes_9.df)</code></pre>
 #keepStandardChromosomes(tx.b38)
 seqlevels(tx.b38)</code></pre>
 <pre><code>##  [1] &quot;chr1&quot;  &quot;chr2&quot;  &quot;chr3&quot;  &quot;chr4&quot;  &quot;chr5&quot;  &quot;chr6&quot;  &quot;chr7&quot;  &quot;chr8&quot;  &quot;chr9&quot;  &quot;chr10&quot; &quot;chr11&quot; &quot;chr12&quot; &quot;chr13&quot; &quot;chr14&quot; &quot;chr15&quot; &quot;chr16&quot; &quot;chr17&quot; &quot;chr18&quot; &quot;chr19&quot; &quot;chr20&quot; &quot;chr21&quot; &quot;chr22&quot; &quot;chrX&quot;  &quot;chrY&quot;  &quot;chrM&quot;</code></pre>
+<pre class="r"><code>seqinfo(tx.b38)</code></pre>
+<pre><code>## Seqinfo object with 25 sequences (1 circular) from hg38 genome:
+##   seqnames seqlengths isCircular genome
+##   chr1      248956422       &lt;NA&gt;   hg38
+##   chr2      242193529       &lt;NA&gt;   hg38
+##   chr3      198295559       &lt;NA&gt;   hg38
+##   chr4      190214555       &lt;NA&gt;   hg38
+##   chr5      181538259       &lt;NA&gt;   hg38
+##   ...             ...        ...    ...
+##   chr21      46709983       &lt;NA&gt;   hg38
+##   chr22      50818468       &lt;NA&gt;   hg38
+##   chrX      156040895       &lt;NA&gt;   hg38
+##   chrY       57227415       &lt;NA&gt;   hg38
+##   chrM          16569       TRUE   hg38</code></pre>
 <pre class="r"><code># Use default genes() setting to get rid of genes with multiple locations in genome
 genes_655.gr &lt;- genes(tx.b38, 
                       filter=list(gene_id = genes_667.df$ENTREZID))
@@ -895,11 +936,11 @@ rm(genes_655.df)</code></pre>
 ##  [1] Rcpp_1.0.6                  lattice_0.20-41             prettyunits_1.1.1           Rsamtools_2.2.3             Biostrings_2.54.0           assertthat_0.2.1            digest_0.6.27               BiocFileCache_1.10.2        R6_2.5.0                    RSQLite_2.2.3               evaluate_0.14               httr_1.4.2                  pillar_1.4.7                zlibbioc_1.32.0             rlang_0.4.10                progress_1.2.2              curl_4.3                    blob_1.2.1                  Matrix_1.3-2                rmarkdown_2.6               BiocParallel_1.20.1         stringr_1.4.0               RCurl_1.98-1.2              bit_4.0.4                   biomaRt_2.42.1              DelayedArray_0.12.3         compiler_3.6.2              rtracklayer_1.46.0          xfun_0.21                   pkgconfig_2.0.3             askpass_1.1                 htmltools_0.5.1.1           openssl_1.4.3               tidyselect_1.1.0            SummarizedExperiment_1.16.1
 ## [36] tibble_3.0.6                GenomeInfoDbData_1.2.2      matrixStats_0.58.0          XML_3.99-0.3                crayon_1.4.1                dbplyr_2.1.0                GenomicAlignments_1.22.1    bitops_1.0-6                rappdirs_0.3.3              grid_3.6.2                  lifecycle_1.0.0             DBI_1.1.1                   magrittr_2.0.1              stringi_1.5.3               cachem_1.0.4                XVector_0.26.0              ellipsis_0.3.1              generics_0.1.0              vctrs_0.3.6                 tools_3.6.2                 bit64_4.0.5                 glue_1.4.2                  purrr_0.3.4                 hms_1.0.0                   fastmap_1.1.0               yaml_2.2.1                  memoise_2.0.0               knitr_1.31</code></pre>
 <pre class="r"><code>Sys.time()</code></pre>
-<pre><code>## [1] &quot;2021-02-22 09:58:21 GMT&quot;</code></pre>
+<pre><code>## [1] &quot;2021-02-22 17:06:32 GMT&quot;</code></pre>
 <pre class="r"><code>gc()</code></pre>
 <pre><code>##            used  (Mb) gc trigger  (Mb) limit (Mb) max used  (Mb)
-## Ncells  7155158 382.2   13459930 718.9         NA 12051825 643.7
-## Vcells 12394151  94.6   21468864 163.8      16384 17824047 136.0</code></pre>
+## Ncells  7155181 382.2   13459898 718.9         NA 12187738 650.9
+## Vcells 12394429  94.6   21468864 163.8      16384 17824053 136.0</code></pre>
 </div>
 
 

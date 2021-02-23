@@ -67,8 +67,8 @@ gc()
 options(stringsAsFactors=F)
 
 # Files and folders
-base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests"
-working_folder=file.path(base_folder,"s04_get_gene_coordinates")
+base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests/scripts"
+working_folder=file.path(base_folder,"s04_gene_list_with_coordinates")
 setwd(working_folder)
 
 # Libraries
@@ -99,6 +99,7 @@ tx.b38 <- TxDb.Hsapiens.UCSC.hg38.knownGene
 tx.b38
 length(seqlevels(tx.b38))
 seqlevels(tx.b38)[1:30]
+seqinfo(tx.b38)
 columns(tx.b38)
 
 # This command can be used to keep only standard chromosomes
@@ -115,8 +116,8 @@ columns(tx.b38)
 load(file.path(working_folder,"s02_667_gene_ids.RData"))
 
 # Update folders (just in case)
-base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests"
-working_folder=file.path(base_folder,"s04_get_gene_coordinates")
+base_folder="/Users/alexey/Documents/mg/s2021/zhang_tests/scripts"
+working_folder=file.path(base_folder,"s04_gene_list_with_coordinates")
 
 ```
 
@@ -202,7 +203,8 @@ After removing Alt loci from the tx.db, we still have 3 genes with multiple loca
 # Note using keepStandardChromosomes() function that is available for 
 # Annortation-databases instead of my previous manual handling of this step
 keepStandardChromosomes(tx.b38)
-seqlevels(tx.b38)
+#seqlevels(tx.b38)
+seqinfo(tx.b38)
 
 # Get all genes from 667 list with transcripts on standard chromosomes
 genes_658.grl <- genes(tx.b38, 
@@ -255,6 +257,7 @@ absent_genes_9.df
 # Alt loci have already been removed from transcript database 
 #keepStandardChromosomes(tx.b38)
 seqlevels(tx.b38)
+seqinfo(tx.b38)
 
 # Use default genes() setting to get rid of genes with multiple locations in genome
 genes_655.gr <- genes(tx.b38, 
