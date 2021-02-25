@@ -51,7 +51,7 @@ pre code {
 </style>
 
 ```{r echo=F}
-#options(width = 999)
+options(width = 999)
 ```
 
 ```{r}

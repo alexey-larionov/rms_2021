@@ -1,0 +1,232 @@
+---
+title: "Test function to combine two GRanges"
+author: "Alexey Larionov"
+date: "25 Feb 2021"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float: true
+editor_options:
+  chunk_output_type: console
+---
+
+# Summary
+- Load functions  
+    + *preprocess_sample.rms()*  
+    + *combine_two_GRanges.rms()*  
+- Toy data  
+    + Read two Zheng samples to DataFrames  
+    + Convert DataFrames to GRanges (using the same Seqinfo as in the 655 genes)  
+- Preprocess  
+    + Read 655 genes with coordinates (already in GRanges using Seqinfo(genome="hg38"))
+    + Preprocess using *preprocess_sample.rms()*  
+- Merge  
+    + Use *combine_two_GRanges.rms()* function  
+
+# Start section
+
+<style>
+pre {
+  overflow-x: auto;
+}
+pre code {
+  word-wrap: normal;
+  white-space: pre;
+}
+</style>
+
+```{r echo=F}
+options(width = 999)
+```
+
+```{r}
+
+# Time stamp
+Sys.time()
+
+# Clenan-up
+rm(list=ls())
+graphics.off()
+
+# Memory
+gc()
+
+# Options
+options(stringsAsFactors=F)
+
+# Files and folders
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+scripts_fiolder <- file.path(base_folder,"scripts","s07_functions")
+setwd(scripts_fiolder)
+
+# Load functions
+source(file.path(scripts_fiolder,"preprocess_sample.R"))
+source(file.path(scripts_fiolder,"combine_two_GRanges.R"))
+
+# Libraries: loaded when sourcing combine_two_GRanges.rms function
+#library(GenomicRanges)
+#library(SummarizedExperiment)
+
+```
+
+# Get toy data
+
+## Sample 1 GRange
+
+```{r}
+
+# Sample data
+sample1_name <- "RMSzhang_SJRHB020"
+sample1_study <- "Zheng"
+
+# Source file
+sample1_file <- paste(sample1_name,"_hg38.bwa.QC.scores.filter.txt",sep="")
+sample1_file_with_path <- file.path(base_folder,"data","d03_germline_annotated_files",sample1_file)
+
+# Read to data frame
+sample1.df <- read.table(sample1_file_with_path,
+                         header=T, sep = "\t", quote = "", na.strings="-9")
+
+# Coerce data frame to GRanges
+sample1.gr <- GRanges(sample1.df, seqinfo=Seqinfo(genome="hg38"))
+
+# Check result
+summary(sample1.gr)
+seqinfo(sample1.gr)
+sort(sample1.gr)[,1:2]
+
+# Clean-up (keep sample name)
+rm(sample1_file_with_path,sample1.df)
+
+```
+
+## Sample 2 GRange
+
+```{r}
+
+# Sample data
+sample2_name <- "RMSzhang_SJRHB022"
+sample2_study <- "Zheng"
+
+# Source file
+sample2_file <- paste(sample2_name,"_hg38.bwa.QC.scores.filter.txt",sep="")
+sample2_file_with_path <- file.path(base_folder,"data","d03_germline_annotated_files",sample2_file)
+
+# Read to data frame
+sample2.df <- read.table(sample2_file_with_path,
+                         header=T, sep = "\t", quote = "", na.strings="-9")
+
+# Coerse to GRanges
+sample2.gr <- GRanges(sample2.df, seqinfo=Seqinfo(genome="hg38"))
+
+# Check results
+summary(sample2.gr)
+seqinfo(sample2.gr)
+sort(sample2.gr)[,1:2]
+
+# Clean-up (keep sample name etc)
+rm(sample2_file_with_path,sample2.df)
+
+```
+
+## Make samples dataframe
+
+```{r}
+
+# Make the data frame
+samples_data.df <- data.frame(id=c(sample1_name,sample2_name),
+                              file=c(sample1_file,sample2_file),
+                              study=c(sample1_study,sample2_study))
+
+rownames(samples_data.df) <- samples_data.df$id
+
+samples_data.df
+
+# Clean-up
+rm(sample1_name,sample2_name,
+   sample1_file,sample2_file,
+   sample1_study,sample2_study)
+
+```
+
+## Read 655 (of 667) genes
+
+```{r}
+
+# Load genes coordinates
+load(file.path(base_folder,"scripts","s04_gene_list_with_coordinates","s03_667_gene_coordinates.RData"))
+
+# Remove unnecessary objects
+rm(working_folder,absent_genes_9.df,genes_628.gr,genes_658.grl,genes_667.df,
+   multi_genes_3.df, multi_genes_3.grl,multi_genes_30.df,multi_genes_30.grl)
+
+# Update folders
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+scripts_fiolder <- file.path(base_folder,"scripts","s07_functions")
+
+# Check the genes list
+summary(genes_655.gr)
+seqinfo(genes_655.gr)
+genes_655.gr
+
+```
+
+# Preprocess samples
+
+- keep variants on standard chromosomes  
+- keep variants overlapping with the genes  
+- exclude known common variants (known gnomAD MAF > 0.05)  
+
+```{r}
+
+# Preprocess
+sample1.gr <- preprocess_sample.rms(sample1.gr, genes_655.gr)
+sample2.gr <- preprocess_sample.rms(sample2.gr, genes_655.gr)
+
+# Check result
+summary(sample1.gr)
+summary(sample2.gr)
+
+# Clean-up
+rm(genes_655.gr)
+
+```
+
+# Combine samples
+
+Combines two GRanges to one SummarizedExperiment  
+following the procedure agreed for RMS project  
+
+```{r}
+
+# Combine
+merged.se <- combine_two_GRanges.rms(sample1.gr,sample2.gr,samples_data.df)
+
+# Check result
+merged.se
+
+# Clean-up
+rm(sample1.gr, sample2.gr, samples_data.df, combine_two_GRanges.rms)
+# preprocess_sample.rms will be needed in the next test
+
+```
+
+# Save data
+
+```{r}
+
+save.image("s01_test_functions.RData")
+
+```
+
+# Final section
+
+```{r}
+
+ls()
+sessionInfo()
+Sys.time()
+gc()
+
+```
