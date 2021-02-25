@@ -1,7 +1,7 @@
 ---
 title: "Combine two Zhang samples"
 author: "Alexey Larionov"
-date: "23 Feb 2021"
+date: "24 Feb 2021"
 output:
   html_document:
     toc: true
@@ -13,30 +13,30 @@ editor_options:
 
 # Summary
 
-- Read source data to GRanges
+- Read source data to GRanges  
     + 655 genes with coordinates: alteady in GRanges (using Seqinfo(genome="hg38"))
-    + two Zhang samples: convert to GRanges using the same Seqinfo as in the 655 genes
-- Preprocess
-    + Select variants on standard chromosomes
-    + Select variants overlapping with 655 genes
-    + Exclude common variants (MAF > 0.05)
+    + two Zhang samples: convert to GRanges using the same Seqinfo as in the 655 genes  
+- Preprocess  
+    + Select variants on standard chromosomes  
+    + Select variants overlapping with 655 genes  
+    + Exclude common variants (MAF > 0.05)  
 - Split x and y to subsets
     + Make Chr_Start_End_Ref_Alt key
-    + Make subsets: unique x, y and overlap of x and y
+    + Make subsets: unique x, y and overlap of x and y  
 - Select variant annotations
-    + Make vector of stable variant annotations to keep in GRanges
-    + Make NA matrices for sample-specific variant annotations
+    + Make vector of stable variant annotations to keep in GRanges  
+    + Make NA matrices for sample-specific variant annotations  
 - Process unique x and y
-    + Make GRanges for unique x and y
-    + Capture sample-specific annotations to the matrices
-- Porcess overlapping x and y
-    + Make GRange for intersect of x and y
-    + Capture sample-specific annotations to the matrices
-- Combine all variants
-    + Merge unique and overlapping GRanges
-    + Sort the merged GRanges
-    + Sync matrices rows with the sorted GRanges
-- Save to SummarisedExperiment
+    + Make GRanges for unique x and y  
+    + Capture sample-specific annotations to the matrices  
+- Porcess overlapping x and y  
+    + Make GRange for intersect of x and y  
+    + Capture sample-specific annotations to the matrices  
+- Combine all variants  
+    + Merge unique and overlapping GRanges  
+    + Sort the merged GRanges  
+    + Sync matrices rows with the sorted GRanges   
+- Save to SummarisedExperiment  
 
 # Start section
 
@@ -51,28 +51,35 @@ pre code {
 </style>
 
 ```{r echo=F}
-#options(width = 999)
+options(width = 999)
 ```
 
 ```{r}
+
 # Time stamp
 Sys.time()
+
 # Clenan-up
 rm(list=ls())
 graphics.off()
+
 # Memory
 gc()
+
 # Options
 options(stringsAsFactors=F)
+
 # Files and folders
 base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
 data_folder <- file.path(base_folder,"data","s06_combine_samples")
 scripts_fiolder <- file.path(base_folder,"scripts","s06_combine_samples")
 setwd(scripts_fiolder)
+
 # Libraries
 library(GenomicRanges)
 library(VennDiagram)
 library(SummarizedExperiment)
+
 ```
 
 # Read data
@@ -80,184 +87,234 @@ library(SummarizedExperiment)
 ## 655 (of 667) genes
 
 ```{r}
+
 # Load data
 load(file.path(base_folder,"scripts","s04_gene_list_with_coordinates","s03_667_gene_coordinates.RData"))
+
 # Remove unnecessary objects
 rm(working_folder,absent_genes_9.df,genes_628.gr,genes_658.grl,genes_667.df,
    multi_genes_3.df, multi_genes_3.grl,multi_genes_30.df,multi_genes_30.grl)
+
 # Update folders
 base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
 data_folder <- file.path(base_folder,"data","s06_combine_samples")
 scripts_fiolder <- file.path(base_folder,"scripts","s06_combine_samples")
+
 # Check the genes list
 summary(genes_655.gr)
 seqinfo(genes_655.gr)
 genes_655.gr
+
 ```
 
 ## Sample 1
 
 ```{r}
+
 # Sample data
 sample1_name <- "RMSzhang_SJRHB020"
 sample1_study <- "Zheng"
+
 # Source file
 sample1_file <- paste(sample1_name,"_hg38.bwa.QC.scores.filter.txt",sep="")
 sample1_file_with_path <- file.path(base_folder,"data","d03_germline_annotated_files",sample1_file)
+
 # Read to data frame
-sample1.df <- read.table(sample1_file_with_path,
+sample1.df <- read.table(sample1_file_with_path, 
                          header=T, sep = "\t", quote = "", na.strings="-9")
+
 # Coerce data frame to GRanges
 sample1.gr <- GRanges(sample1.df, seqinfo=Seqinfo(genome="hg38"))
+
 # Check result
 summary(sample1.gr)
 seqinfo(sample1.gr)
 sort(sample1.gr)[,1:2]
+
 # Clean-up (keep sample name)
 rm(sample1_file_with_path,sample1.df)
+
 ```
 
 ## Sample 2
 
 ```{r}
+
 # Sample data
 sample2_name <- "RMSzhang_SJRHB022"
 sample2_study <- "Zheng"
+
 # Source file
 sample2_file <- paste(sample2_name,"_hg38.bwa.QC.scores.filter.txt",sep="")
 sample2_file_with_path <- file.path(base_folder,"data","d03_germline_annotated_files",sample2_file)
+
 # Read to data frame
-sample2.df <- read.table(sample2_file_with_path,
+sample2.df <- read.table(sample2_file_with_path, 
                          header=T, sep = "\t", quote = "", na.strings="-9")
+
 # Coerse to GRanges
 sample2.gr <- GRanges(sample2.df, seqinfo=Seqinfo(genome="hg38"))
+
 # Check results
 summary(sample2.gr)
 seqinfo(sample2.gr)
 sort(sample2.gr)[,1:2]
+
 # Clean-up (keep sample name etc)
 rm(sample2_file_with_path,sample2.df)
+
 ```
 
 ## Make simple handles
 
 ```{r}
+
 x <- sample1.gr
 y <- sample2.gr
 g <- genes_655.gr
+
 ```
 
 # Preprocess
 
 ```{r}
+
 # Keep only variants on standard chromosomes
 x <- keepStandardChromosomes(x, pruning.mode="coarse")
 summary(x)
 seqinfo(x)
 x[,1:2]
+
 y <- keepStandardChromosomes(y, pruning.mode="coarse")
 summary(y)
 seqinfo(y)
 y[,1:2]
-
+  
 # Overlap with the genes list
 head(g)
 x <- subsetByOverlaps(x, g, type="any")
 summary(x)
+
 y <- subsetByOverlaps(y, g, type="any")
-summary(y)
+summary(y)  
+
 # Exclude common variants (MAF > 0.05)
-x <- x[x$gnomAD_genome_ALL <= 0.05 |
-       x$gnomAD_genome_ALL >= 0.95 |
+x <- x[x$gnomAD_genome_ALL <= 0.05 | 
+       x$gnomAD_genome_ALL >= 0.95 | 
        is.na(x$gnomAD_genome_ALL)]
 summary(x)
-y <- y[y$gnomAD_genome_ALL <= 0.05 |
-       y$gnomAD_genome_ALL >= 0.95 |
+
+y <- y[y$gnomAD_genome_ALL <= 0.05 | 
+       y$gnomAD_genome_ALL >= 0.95 | 
        is.na(y$gnomAD_genome_ALL)]
 summary(y)
+
 # Clean-up
 rm(g, genes_655.gr)
+
 ```
 
 # Select sub-sets
 
-Unique, Intersect and Overlap using key based on **chr**, **start**, **end**, **ref** and **alt**.
-Note that this key uses Annovar-style data (different from VCF-style).
+Unique, Intersect and Overlap using key based on **chr**, **start**, **end**, **ref** and **alt**.  
+Note that this key uses Annovar-style data (different from VCF-style).  
 
 ## Make x key
 
 ```{r}
+
 # Select data for the key
 x_chr <- as.character(x@seqnames)
 x_start <- as.data.frame(x@ranges)$start
 x_end <- as.data.frame(x@ranges)$end
 x_ref <- x$Ref
 x_alt <- x$Alt
+
 # Make and add key to GRanges
 x_var_id <- paste(x_chr,x_start,x_end,x_ref,x_alt,sep="_")
 x$var_id <- x_var_id
+
 # Add key to GRanges names
 # to facilitate easy selection of ranges by the key
 names(x) <- x_var_id
+
 # Check result
 x[,c("var_id","Gene.refGene")]
+
 # Clean-up
 rm(x_chr,x_start,x_end,x_ref,x_alt,x_var_id)
+
 ```
 
 ## Make y key
 
 ```{r}
+
 # Select data for key
 y_chr <- as.character(y@seqnames)
 y_start <- as.data.frame(y@ranges)$start
 y_end <- as.data.frame(y@ranges)$end
 y_ref <- y$Ref
 y_alt <- y$Alt
+
 # Make and add key to GRanges
 y_var_id <- paste(y_chr,y_start,y_end,y_ref,y_alt,sep="_")
 y$var_id <- y_var_id
+
 # Add key to GRanges names
 # to facilitate easy selection of ranges by the key
-names(y) <- y_var_id
+names(y) <- y_var_id 
+
 # Check result
 y[,c("var_id","Gene.refGene")]
+
 # Clean-up
 rm(y_chr,y_start,y_end,y_ref,y_alt,y_var_id)
+
 ```
 
 ## Get subsets
 
 ```{r}
+
 unique_x <- setdiff(x$var_id, y$var_id)
 length(unique_x)
+
 unique_y <- setdiff(y$var_id, x$var_id)
 length(unique_y)
-intersect_xy <- intersect(x$var_id, y$var_id)
-length(intersect_xy)
+
+intersect_gr_se <- intersect(x$var_id, y$var_id)
+length(intersect_gr_se)
+
 union_xy <- union(x$var_id, y$var_id)
 length(union_xy)
+
 # Plot Venn (suppressing the log file)
 futile.logger::flog.threshold(futile.logger::ERROR, name = "VennDiagramLogger")
 z <- venn.diagram(list(sample1=x$var_id, sample2=y$var_id),
                   filename=NULL);
 grid.draw(z)
+
 # Sanity check
-length(c(unique_x,unique_y,intersect_xy)) == length(union_xy)
+length(c(unique_x,unique_y,intersect_gr_se)) == length(union_xy)
+
 # Clean-up
 rm(z)
+
 ```
 
 # Select variant annotations
 
 ## Vector of sample-independent variant annotations
 
-These (stable) variant annotations should not change sample to sample, e.g. Ref, ALt, Gene name etc.  Such annotations will be kept within metadata of the merged GRanges object.
+These (stable) variant annotations should not change sample to sample, e.g. Ref, ALt, Gene name etc.  Such annotations will be kept within metadata of the merged GRanges object.  
 
 ```{r}
+
 # Review available annotations
 colnames(mcols(x))
 #x.df <- as.data.frame(x)
+
 # Select annotations to keep
 stable_annotations <- c("var_id",
 "Gene.refGene","Func.refGene","ExonicFunc.refGene",
@@ -267,30 +324,38 @@ stable_annotations <- c("var_id",
 "CDS_Pos","TranscriptSize",
 "AA_Pos","AA1","AA2","ProteinSize","Interpro_domain",
 "gnomAD_genome_ALL","ExAC_ALL")
+
 length(stable_annotations)
+
 ```
 
 ## Matrices for sample-specific variant annotations
 
-These variant annotations may change from sample to sample, such as Genotype or Drepth etc.  Such annotations will be captured and stored in additional matrices, syncronised with the GRanges object.
+These variant annotations may change from sample to sample, such as Genotype or Drepth etc.  Such annotations will be captured and stored in additional matrices, syncronised with the GRanges object.  
 
 ```{r}
+
 # Score
 score.mx <- matrix(NA,ncol=2,nrow=length(union_xy))
 rownames(score.mx) <- union_xy
 colnames(score.mx) <- c(sample1_name,sample2_name)
 head(score.mx)
+
 #"TruncScore"
 #"HomozygScore"
 #"XAcorrect"
+
 # Other matrices
+
 # GT
 gt.mx <- matrix(NA,ncol=2,nrow=length(union_xy))
 rownames(gt.mx) <- union_xy
 colnames(gt.mx) <- c(sample1_name,sample2_name)
 head(gt.mx)
+
 #"Depth"
 #"AD"
+
 ```
 
 # Process non-overlapping variants
@@ -298,146 +363,187 @@ head(gt.mx)
 ## GRanges
 
 ```{r}
+
 unique_x.gr <- x[unique_x,stable_annotations]
 summary(unique_x.gr)
+
 unique_y.gr <- y[unique_y,stable_annotations]
 summary(unique_y.gr)
+
 ```
 
 ## Matrices
 
 ```{r}
+
 score.mx[unique_x,sample1_name] <- as.data.frame(x[unique_x,])$Score
 gt.mx[unique_x,sample1_name] <- as.data.frame(x[unique_x,])$GT
+
 score.mx[unique_y,sample2_name] <- as.data.frame(y[unique_y,])$Score
 gt.mx[unique_y,sample2_name] <- as.data.frame(y[unique_y,])$GT
+
 rm(unique_x,unique_y)
+
 ```
 
 # Process overlapping variants
 
 ## Granges
 
-Check that the stable annotations are the same before making GRange
+Check that the stable annotations are the same before making GRange  
 
 ```{r}
+
 # Get intersect ranges from both samples
-intersect_x.gr <- x[intersect_xy,stable_annotations]
-summary(intersect_x.gr)
-intersect_y.gr <- y[intersect_xy,stable_annotations]
-summary(intersect_y.gr)
+intersect_gr.gr <- x[intersect_gr_se,stable_annotations]
+summary(intersect_gr.gr)
+
+intersect_se.gr <- y[intersect_gr_se,stable_annotations]
+summary(intersect_se.gr)
+
 # Check that intersect ranges from both samples are equal
-if (!all(intersect_x.gr==intersect_y.gr)) {
+if (!all(intersect_gr.gr==intersect_se.gr)) {
   stop("GRanges shared elements differ", ok)
 }
+
 # Save the intersect
-intersect_xy.gr <- intersect_x.gr
+intersect_gr_se.gr <- intersect_gr.gr
+
 # Clean-up
-rm(intersect_x.gr,intersect_y.gr,stable_annotations)
+rm(intersect_gr.gr,intersect_se.gr,stable_annotations)
+
 ```
 
 ## Matrices
 
 ```{r}
-score.mx[intersect_xy,sample1_name] <- as.data.frame(x[intersect_xy,])$Score
-gt.mx[intersect_xy,sample1_name] <- as.data.frame(x[intersect_xy,])$GT
-score.mx[intersect_xy,sample2_name] <- as.data.frame(y[intersect_xy,])$Score
-gt.mx[intersect_xy,sample2_name] <- as.data.frame(y[intersect_xy,])$GT
-rm(intersect_xy,x,y)
+
+score.mx[intersect_gr_se,sample1_name] <- as.data.frame(x[intersect_gr_se,])$Score
+gt.mx[intersect_gr_se,sample1_name] <- as.data.frame(x[intersect_gr_se,])$GT
+
+score.mx[intersect_gr_se,sample2_name] <- as.data.frame(y[intersect_gr_se,])$Score
+gt.mx[intersect_gr_se,sample2_name] <- as.data.frame(y[intersect_gr_se,])$GT
+
+rm(intersect_gr_se,x,y)
+
 ```
 
 # Combine overlapping and non-overlapping granges
 
 ```{r}
+
 # Combine granges
-xy.gr <- c(unique_x.gr,unique_y.gr,intersect_xy.gr)
+xy.gr <- c(unique_x.gr,unique_y.gr,intersect_gr_se.gr)
+
 # Sort granges
 xy.gr <- sort(xy.gr)
+
 # Update matrices to keep order consistent with GRange
 score.mx <- score.mx[xy.gr$var_id,]
 gt.mx <- gt.mx[xy.gr$var_id,]
+
 # Check result
 summary(xy.gr)
 seqinfo(xy.gr)
+
 # Compare with matrices
 xy.gr[,1:2]
 score.mx[1:5,]
 gt.mx[1:5,]
+
 # Clean-up
-rm(union_xy,unique_x.gr,unique_y.gr,intersect_xy.gr)
+rm(union_xy,unique_x.gr,unique_y.gr,intersect_gr_se.gr)
+
 ```
 
-# Save to SummarizedExperiment
+# Save to SummarizedExperiment  
 
-The combination of matrices and GRanges may be stored in **SummarizedExperiment** class for consistency with existent Bioconductor solutions:
+The combination of matrices and GRanges may be stored in **SummarizedExperiment** class for consistency with existent Bioconductor solutions:  
 
-- http://bioconductor.org/packages/release/bioc/html/SummarizedExperiment.html
-- http://bioconductor.org/packages/release/bioc/vignettes/SummarizedExperiment/inst/doc/SummarizedExperiment.html
+- http://bioconductor.org/packages/release/bioc/html/SummarizedExperiment.html  
+- http://bioconductor.org/packages/release/bioc/vignettes/SummarizedExperiment/inst/doc/SummarizedExperiment.html  
 
 ```{r}
+
 # Sanity checks: that objects are in sync
 if (any(colnames(gt.mx) != colnames(score.mx))) {
   stop("Matrices have different samples", ok)
 }
+
 if (any(rownames(gt.mx) != rownames(score.mx))) {
   stop("Matrices have different variants", ok)
 }
+
 if (any(names(xy.gr) != rownames(gt.mx))) {
   stop("Matrices and GRanges have different variants", ok)
 }
+
 # Prepare samples info
 samples <- c(sample1_name,sample2_name)
 files <- c(sample1_file,sample2_file)
 study <- c(sample1_study,sample2_study)
 samples.df <- DataFrame(id=samples, file=files ,study=study, row.names=samples)
 samples.df
+
 # Make some metadata (optional)
 metadata.ls <- list(blabla="Bla Bla Bla",source="Made by us")
+
 # Put all data to a SummarizedExperiment container
 merged.se <- SummarizedExperiment(assays=list(genotypes=gt.mx,scores=score.mx),
                      rowRanges=xy.gr, colData=samples.df, metadata=metadata.ls)
+
 # Explore result
 merged.se
+
 metadata(merged.se)
+
 head(assays(merged.se)$scores)
 dim(assays(merged.se)$scores)
-head(assays(merged.se)$genotypes)
+
+head(assays(merged.se)$genotypes) 
 dim(assays(merged.se)$genotypes)
+
 rowRanges(merged.se)[,1:2]
 colData(merged.se)
+
 # Clean-up
 rm(samples,files,study,samples.df,xy.gr,gt.mx,score.mx,
    sample1_name,sample2_name,
    sample1_file,sample2_file,
    sample1_study,sample2_study,
    metadata.ls)
+
 ```
 
 # Save data
 
 ```{r}
+
 save.image("s01_combine_two_samples.RData")
+
 ```
 
 # Final section
 
 ```{r}
+
 ls()
 sessionInfo()
 Sys.time()
 gc()
+
 ```
 
 # Notes
 
-In case of further development of this approach for GRanges merging, the following points could be kept in mind:
+In case of further development of this approach for GRanges merging, the following points could be kept in mind:  
 
-- Change of the **data type**
-    + merge(GRanges) -> SummarisedExperiment
-- Flexibility of selecting the **key** for subsetting
-    + Key used in this example includes a combination of position and metadata: Position, Ref and ALt
-    + Alternatively it could be different overlaps by positions: any, start, start+end, etc
-- Flexibility of selecting **anotations** to keep
-    + In this example we manually selected the columns to keep and their types (stable or sample-specific)
+- Change of the **data type**  
+    + merge(GRanges) -> SummarisedExperiment  
+- Flexibility of selecting the **key** for subsetting  
+    + Key used in this example includes a combination of position and metadata: Position, Ref and ALt  
+    + Alternatively it could be different overlaps by positions: any, start, start+end, etc  
+- Flexibility of selecting **anotations** to keep  
+    + In this example we manually selected the columns to keep and their types (stable or sample-specific)  
     + Alternatively, all meta-data columns could be processed fully automatically  
     + It could also be done in a mixed mode: some fields are specified manually with their types, and the rest is processed automatically  
