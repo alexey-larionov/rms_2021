@@ -200,7 +200,7 @@ following the procedure agreed for RMS project
 ```{r}
 
 # Combine
-two_samples.se <- combine_two_GRanges.rms(sample1.gr,sample2.gr,samples_data.df)
+two_samples.se <- combine_two_GRanges.rms(sample1.gr, sample2.gr, samples_data.df)
 
 # Check result
 two_samples.se
@@ -250,6 +250,9 @@ rm(sample_file_with_path, sample.df)
 sample_data.ls <- list(id=sample_name, 
                        file=sample_file,
                        study=sample_study)
+
+sample_data.ls
+
 # Clean-up
 rm(sample_name,sample_file,sample_study)
 
@@ -260,6 +263,7 @@ rm(sample_name,sample_file,sample_study)
 ```{r}
 
 sample.gr <- preprocess_sample.rms(sample.gr, genes_655.gr)
+seqinfo(sample.gr)
 summary(sample.gr)
 
 rm(preprocess_sample.rms, genes_655.gr)
@@ -275,6 +279,9 @@ three_samples.se <- add_GR_to_SE.rms(sample.gr, two_samples.se, sample_data.ls)
 
 # Check result
 three_samples.se
+
+colData(two_samples.se)
+colData(three_samples.se)
 
 # Clean-up
 rm(sample.gr, two_samples.se, sample_data.ls, add_GR_to_SE.rms)

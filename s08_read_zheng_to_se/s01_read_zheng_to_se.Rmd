@@ -1,0 +1,301 @@
+---
+title: "Read germline Zheng data to a SummarizedExperiment"
+author: "Alexey Larionov"
+date: "25 Feb 2021"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float: true
+editor_options:
+  chunk_output_type: console
+---
+
+# Summary
+
+Read data from 30 annotated text files to one SummarizedExperiment  
+
+# Start section
+
+<style>
+pre {
+  overflow-x: auto;
+}
+pre code {
+  word-wrap: normal;
+  white-space: pre;
+}
+</style>
+
+```{r echo=F}
+options(width = 999)
+```
+
+```{r}
+
+# Time stamp
+Sys.time()
+
+# Clenan-up
+rm(list=ls())
+graphics.off()
+
+# Memory
+gc()
+
+# Options
+options(stringsAsFactors=F)
+
+# Files and folders
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+data_fiolder <- file.path(base_folder,"data","d03_germline_annotated_files")
+functions_fiolder <- file.path(base_folder,"scripts","f01_functions")
+scripts_fiolder <- file.path(base_folder,"scripts","s08_read_zheng_to_se")
+setwd(scripts_fiolder)
+
+# Libraries 
+# loaded when sourcing combine_two_GRanges.rms and add_GR_to_SE.rms functions
+library(GenomicRanges)
+library(SummarizedExperiment)
+
+# Load functions
+source(file.path(functions_fiolder,"f01_preprocess_sample.R"))
+source(file.path(functions_fiolder,"f02_combine_two_GRanges.R"))
+source(file.path(functions_fiolder,"f03_add_GR_to_SE.R"))
+
+```
+
+# Read 655 (of 667) genes
+
+```{r}
+
+# Load genes coordinates
+load(file.path(base_folder,"scripts","s04_gene_list_with_coordinates","s03_667_gene_coordinates.RData"))
+
+# Remove unnecessary objects
+rm(working_folder,absent_genes_9.df,genes_628.gr,genes_658.grl,genes_667.df,
+   multi_genes_3.df, multi_genes_3.grl,multi_genes_30.df,multi_genes_30.grl)
+
+# Update folders
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+data_fiolder <- file.path(base_folder,"data","d03_germline_annotated_files")
+functions_fiolder <- file.path(base_folder,"scripts","f01_functions")
+scripts_fiolder <- file.path(base_folder,"scripts","s08_read_zheng_to_se")
+
+# Check the genes list
+summary(genes_655.gr)
+seqinfo(genes_655.gr)
+genes_655.gr
+
+```
+
+# Seqinfo(genome="hg38")
+
+Retrieve andf save to an object to speed things up later, when using it
+
+```{r}
+
+seq_info_b38 <- Seqinfo(genome="hg38")
+
+```
+
+# Read samples list
+
+```{r}
+
+samples <- scan(file.path(data_fiolder,"zhang.GL.txt"),what="character")
+
+```
+
+# Merge the first 2 samples
+
+## Sample 1
+
+```{r}
+
+# Sample data
+sample1_name <- samples[1]
+sample1_study <- "Zheng"
+
+# Source file
+sample1_file <- paste(sample1_name,"_hg38.bwa.QC.scores.filter.txt",sep="")
+sample1_file_with_path <- file.path(base_folder,"data","d03_germline_annotated_files",sample1_file)
+
+# Read to data frame
+sample1.df <- read.table(sample1_file_with_path,
+                         header=T, sep = "\t", quote = "", na.strings="-9")
+
+# Coerce data frame to GRanges
+sample1.gr <- GRanges(sample1.df, seqinfo=seq_info_b38)
+
+# Check result
+summary(sample1.gr)
+seqinfo(sample1.gr)
+
+# Clean-up (keep sample name)
+rm(sample1_file_with_path,sample1.df)
+
+```
+
+## Sample 2
+
+```{r}
+
+# Sample data
+sample2_name <- samples[2]
+sample2_study <- "Zheng"
+
+# Source file
+sample2_file <- paste(sample2_name,"_hg38.bwa.QC.scores.filter.txt",sep="")
+sample2_file_with_path <- file.path(base_folder,"data","d03_germline_annotated_files",sample2_file)
+
+# Read to data frame
+sample2.df <- read.table(sample2_file_with_path,
+                         header=T, sep = "\t", quote = "", na.strings="-9")
+
+# Coerse to GRanges
+sample2.gr <- GRanges(sample2.df, seqinfo=seq_info_b38)
+
+# Check result
+summary(sample2.gr)
+seqinfo(sample1.gr)
+
+# Clean-up (keep sample name etc)
+rm(sample2_file_with_path,sample2.df)
+
+```
+
+## Samples info
+
+```{r}
+
+# Make the data frame
+samples_data.df <- data.frame(id=c(sample1_name,sample2_name),
+                              file=c(sample1_file,sample2_file),
+                              study=c(sample1_study,sample2_study))
+
+rownames(samples_data.df) <- samples_data.df$id
+
+samples_data.df
+
+# Clean-up
+rm(sample1_name,sample2_name,
+   sample1_file,sample2_file,
+   sample1_study,sample2_study)
+
+```
+
+## Preprocess
+
+```{r}
+
+# Preprocess
+sample1.gr <- preprocess_sample.rms(sample1.gr, genes_655.gr)
+sample2.gr <- preprocess_sample.rms(sample2.gr, genes_655.gr)
+
+# Check result
+summary(sample1.gr)
+seqinfo(sample1.gr)
+
+summary(sample2.gr)
+seqinfo(sample1.gr)
+
+```
+
+## Combine
+
+Combine two GRanges to one SummarizedExperiment following the procedure agreed for RMS project  
+
+```{r}
+
+# Combine
+zheng.se <- combine_two_GRanges.rms(sample1.gr,sample2.gr,samples_data.df)
+
+# Check result
+zheng.se
+
+# Clean-up
+rm(sample1.gr, sample2.gr, samples_data.df, combine_two_GRanges.rms)
+
+```
+
+# Add remaining samples
+
+The loop may take 1-2 minutes
+
+```{r}
+
+# For each sample starting from the third
+for(i in 3:length(samples)){
+  
+  # Sample data
+  sample_name <- samples[i]
+  sample_study <- "Zheng"
+
+  # Source file
+  sample_file <- paste(sample_name,"_hg38.bwa.QC.scores.filter.txt",sep="")
+  sample_file_with_path <- file.path(base_folder,"data","d03_germline_annotated_files",sample_file)
+
+  # Read to data frame
+  sample.df <- read.table(sample_file_with_path,
+                         header=T, sep = "\t", quote = "", na.strings="-9")
+
+  # Coerse to GRanges
+  sample.gr <- GRanges(sample.df, seqinfo=seq_info_b38)
+
+  # Make sample information list
+  sample_data.ls <- list(id=sample_name, 
+                         file=sample_file,
+                         study=sample_study)
+
+  # Preprocess sample  
+  sample.gr <- preprocess_sample.rms(sample.gr, genes_655.gr)
+  
+  # Add new sample to SE
+  zheng.se <- add_GR_to_SE.rms(sample.gr, zheng.se, sample_data.ls)
+
+  # Clean-up
+  rm(sample_name, sample_study, sample_file, sample_file_with_path, 
+     sample_data.ls, sample.df, sample.gr)
+
+} # Next sample
+
+# Clean-up
+rm(i, samples, preprocess_sample.rms, genes_655.gr, add_GR_to_SE.rms, seq_info_b38)
+
+```
+
+# Check result
+
+```{r}
+
+zheng.se
+
+colData(zheng.se)
+rowRanges(zheng.se)[,1:2]
+
+assay(zheng.se,"genotypes")[1:15,1:5]
+assay(zheng.se,"scores")[1:15,1:5]
+
+metadata(zheng.se)
+
+```
+
+# Save data
+
+```{r}
+
+save.image("s01_read_zheng_to_se.RData")
+
+```
+
+# Final section
+
+```{r}
+
+ls()
+sessionInfo()
+Sys.time()
+gc()
+
+```
