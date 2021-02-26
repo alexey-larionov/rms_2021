@@ -37,7 +37,7 @@ pre code {
 </style>
 
 ```{r echo=F}
-options(width = 999)
+#options(width = 999)
 ```
 
 ```{r}
@@ -61,10 +61,12 @@ scripts_fiolder <- file.path(base_folder,"scripts","s07_functions")
 setwd(scripts_fiolder)
 
 # Load functions
-source(file.path(scripts_fiolder,"preprocess_sample.R"))
-source(file.path(scripts_fiolder,"combine_two_GRanges.R"))
+source(file.path(scripts_fiolder,"f01_preprocess_sample.R"))
+source(file.path(scripts_fiolder,"f02_combine_two_GRanges.R"))
+source(file.path(scripts_fiolder,"f03_add_GR_to_SE.R"))
 
-# Libraries: loaded when sourcing combine_two_GRanges.rms function
+# Libraries 
+# loaded when sourcing combine_two_GRanges.rms and add_GR_to_SE.rms functions
 #library(GenomicRanges)
 #library(SummarizedExperiment)
 
@@ -188,9 +190,6 @@ sample2.gr <- preprocess_sample.rms(sample2.gr, genes_655.gr)
 summary(sample1.gr)
 summary(sample2.gr)
 
-# Clean-up
-rm(genes_655.gr)
-
 ```
 
 # Combine samples
@@ -201,14 +200,84 @@ following the procedure agreed for RMS project
 ```{r}
 
 # Combine
-merged.se <- combine_two_GRanges.rms(sample1.gr,sample2.gr,samples_data.df)
+two_samples.se <- combine_two_GRanges.rms(sample1.gr,sample2.gr,samples_data.df)
 
 # Check result
-merged.se
+two_samples.se
 
 # Clean-up
 rm(sample1.gr, sample2.gr, samples_data.df, combine_two_GRanges.rms)
-# preprocess_sample.rms will be needed in the next test
+
+```
+
+# Adding GR to SE
+
+# Read new sample
+
+## Sample 3 GRange
+
+```{r}
+
+# Sample data
+sample_name <- "RMSzhang_SJRHB023"
+sample_study <- "Zheng"
+
+# Source file
+sample_file <- paste(sample_name,"_hg38.bwa.QC.scores.filter.txt",sep="")
+sample_file_with_path <- file.path(base_folder,"data","d03_germline_annotated_files",sample_file)
+
+# Read to data frame
+sample.df <- read.table(sample_file_with_path,
+                         header=T, sep = "\t", quote = "", na.strings="-9")
+
+# Coerse to GRanges
+sample.gr <- GRanges(sample.df, seqinfo=Seqinfo(genome="hg38"))
+
+# Check results
+summary(sample.gr)
+sort(sample.gr)[,1:2]
+
+# Clean-up (keep sample name etc)
+rm(sample_file_with_path, sample.df)
+
+```
+
+## Make sample information list
+
+```{r}
+
+# Make list
+sample_data.ls <- list(id=sample_name, 
+                       file=sample_file,
+                       study=sample_study)
+# Clean-up
+rm(sample_name,sample_file,sample_study)
+
+```
+
+# Preprocess new sample  
+
+```{r}
+
+sample.gr <- preprocess_sample.rms(sample.gr, genes_655.gr)
+summary(sample.gr)
+
+rm(preprocess_sample.rms, genes_655.gr)
+
+```
+
+# Add new sample to SE
+
+```{r}
+
+# Combine
+three_samples.se <- add_GR_to_SE.rms(sample.gr, two_samples.se, sample_data.ls)
+
+# Check result
+three_samples.se
+
+# Clean-up
+rm(sample.gr, two_samples.se, sample_data.ls, add_GR_to_SE.rms)
 
 ```
 

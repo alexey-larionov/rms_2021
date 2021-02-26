@@ -376,6 +376,7 @@ gt.mx[intersect_gr_se,gr_sample_name] <- as.data.frame(gr[intersect_gr_se,])$GT
 score.mx[intersect_gr_se,se$id] <- assay(se,"scores")[intersect_gr_se,]
 gt.mx[intersect_gr_se,se$id] <- assay(se,"genotypes")[intersect_gr_se,]
 
+# Clean-up
 rm(intersect_gr_se,gr)
 
 ```
