@@ -57,7 +57,7 @@ options(stringsAsFactors=F)
 
 # Files and folders
 base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
-scripts_fiolder <- file.path(base_folder,"scripts","s07_functions")
+scripts_fiolder <- file.path(base_folder,"scripts","s07_test_functions")
 setwd(scripts_fiolder)
 
 # Libraries 
@@ -165,7 +165,7 @@ rm(working_folder,absent_genes_9.df,genes_628.gr,genes_658.grl,genes_667.df,
 
 # Update folders
 base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
-scripts_fiolder <- file.path(base_folder,"scripts","s07_functions")
+scripts_fiolder <- file.path(base_folder,"scripts","s07_test_functions")
 
 # Check the genes list
 summary(genes_655.gr)
