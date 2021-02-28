@@ -54,7 +54,6 @@ scripts_fiolder <- file.path(base_folder,"scripts","s08_read_zheng_to_se")
 setwd(scripts_fiolder)
 
 # Libraries 
-# loaded when sourcing combine_two_GRanges.rms and add_GR_to_SE.rms functions
 library(GenomicRanges)
 library(SummarizedExperiment)
 
