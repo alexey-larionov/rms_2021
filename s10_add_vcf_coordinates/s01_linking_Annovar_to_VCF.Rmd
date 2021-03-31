@@ -1,0 +1,326 @@
+---
+title: "Add VCF-style coordinates to Zhang SE"
+author: "Alexey Larionov"
+date: "31 Mar 2021"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float: true
+editor_options:
+  chunk_output_type: console
+---
+
+# Summary
+
+Add VCF-type coordinates to 
+
+# Start section
+
+<style>
+pre {
+  overflow-x: auto;
+}
+pre code {
+  word-wrap: normal;
+  white-space: pre;
+}
+</style>
+
+```{r echo=F}
+#options(width = 999)
+```
+
+```{r}
+
+# Time stamp
+Sys.time()
+
+# Clenan-up
+rm(list=ls())
+graphics.off()
+
+# Memory
+gc()
+
+# Options
+options(stringsAsFactors=F)
+
+# Files and folders
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+data_fiolder <- file.path(base_folder,"data","s10_add_vcf_coordinates")
+dir.create(data_fiolder)
+scripts_fiolder <- file.path(base_folder,"scripts","s10_add_vcf_coordinates")
+setwd(scripts_fiolder)
+
+```
+
+## Libraries
+
+```{r}
+
+# --- Library for reading VCF-s --- #
+
+library(vcfR)
+
+# --- Library and data-package(s) for ref genome --- #
+
+#BiocManager::install("BSgenome")
+#BiocManager::install("BSgenome.Hsapiens.NCBI.GRCh38")
+# NCBI uses chromosome names w/o "chr" prefix
+#BiocManager::install("BSgenome.Hsapiens.UCSC.hg38")
+# UCSC uses chromosome names with "chr" prefix
+#available.genomes()
+#installed.genomes()
+
+library(BSgenome)
+
+# --- Other libraries --- #
+
+#library(dplyr) # May interfere with many genomic packages !!!
+
+```
+
+# Load data
+
+```{r}
+
+load(file.path(base_folder,"scripts","s08_read_zheng_to_se","s01_read_zheng_to_se.RData"))
+
+rm(functions_fiolder, data_fiolder)
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+scripts_fiolder <- file.path(base_folder,"scripts","s10_add_vcf_coordinates")
+
+```
+
+
+## Reference genome
+
+Using a BSgenome data-package  
+
+Alternatively the genome could be red directly from a FASTA file:  
+https://www.biostars.org/p/171577/  
+
+```{r}
+
+# Check available and installed BSgenome data packages
+# available.genomes()
+#installed.genomes()
+# NCBI uses chromosome names w/o "chr" prefix
+# UCSC uses chromosome names with "chr" prefix
+
+# Load required genome: b38 with "chr" prefixes
+#b38 <- getBSgenome("BSgenome.Hsapiens.NCBI.GRCh38")
+b38 <- getBSgenome("BSgenome.Hsapiens.UCSC.hg38")
+
+# Sequence / chromosome names
+b38@seqinfo
+
+# Example of bases retrieval by coordinates
+getSeq(b38,"chr1",start=257894,end=257897)
+
+```
+
+# Linking variants  
+
+## SNP
+
+- VCF.Chr = Annovar.Chr  
+- VCF.Pos = Annovar.Start  
+- VCF.Ref = Annovar.Ref  
+- VCF.Alt = Annovar.Alt  
+
+```{r}
+
+# Example of SNP in Annotated text file
+annovar.snp <- SJRHB020.df[32,c("Chr","Start","End","Ref","Alt")]
+annovar.snp
+
+# Checking SNP position in b38 ref genome
+#getSeq(b38,"chr2",start=197421031,end=197421031)
+
+# Translating SNP coordinates from annovar to vcf
+vcf.snp.chr <- annovar.snp$Chr
+vcf.snp.pos <- annovar.snp$Start
+vcf.snp.ref <- annovar.snp$Ref
+vcf.snp.alt <- annovar.snp$Alt
+vcf.snp <- c(vcf.snp.chr, 
+             as.character(vcf.snp.pos), 
+             vcf.snp.ref, 
+             vcf.snp.alt)
+
+# Make the key to search multisample VCF
+vcf_key <- paste(vcf.snp, collapse="_")
+vcf_key
+
+# Check this SNP in Multisample VCF
+if(vcf_key %in% variants.df$key){
+  variants.df[vcf_key,c("CHROM","POS","REF","ALT")]
+} else {
+  cat("Can't find variant in multisample VCF\n")
+}
+
+# Clean-up
+rm(annovar.snp,vcf.snp,vcf.snp.chr,vcf.snp.pos,vcf.snp.ref,vcf.snp.alt,vcf_key)
+
+```
+
+## Deletion
+
+- VCF.Chr = Annovar.Chr  
+- VCF.Pos = Annovar.Start-1 (because VCF adds one ancoring nucleotide)  
+- VCF.Ref = Ref.genome[VCF.Pos, Annovar.End] (sequence from ref genome)  
+- VC.Alt = Ref.genome[VCF.Pos] (ancoring nucleotide from ref genome)  
+
+```{r}
+
+# Example of DEL in Annotated text file
+annovar.del <- SJRHB020.df[1,c("Chr","Start","End","Ref","Alt")]
+annovar.del
+
+# Checking DEL position in b38 ref genome
+#getSeq(b38,"chr19",start=52300417,end=52300418)
+
+# Translating DEL coordinates from annovar to vcf
+vcf.del.chr <- annovar.del$Chr
+vcf.del.pos <- annovar.del$Start - 1
+
+vcf.del.ref <- getSeq(b38,vcf.del.chr,
+                      start=vcf.del.pos,
+                      end=annovar.del$End)
+
+vcf.del.alt <- getSeq(b38,vcf.del.chr,
+                      start=vcf.del.pos,
+                      end=vcf.del.pos)
+
+vcf.del <- c(vcf.del.chr, 
+             as.character(vcf.del.pos), 
+             as.character(vcf.del.ref), 
+             as.character(vcf.del.alt))
+vcf.del
+
+# Make the key to search multisample VCF
+vcf_key <- paste(vcf.del, collapse="_")
+vcf_key
+
+# Check this DEL in Multisample VCF
+if(vcf_key %in% variants.df$key){
+  variants.df[vcf_key,c("CHROM","POS","REF","ALT")]
+} else {
+  cat("Can't find variant in multisample VCF\n")
+}
+
+# Clean-up
+rm(annovar.del,vcf.del,vcf.del.chr,vcf.del.pos,vcf.del.ref,vcf.del.alt,vcf_key)
+
+```
+
+## Insertion
+
+- VCF.Chr = Annovar.Chr  
+- VCF.Pos = Annovar.Start
+- VCF.Ref = Ref.genome[Annovar.Start]  
+- VC.Alt = VCF.Ref + Annovar.Alt
+
+```{r}
+
+# Example of INS in Annotated text file
+annovar.ins <- SJRHB020.df[6,c("Chr","Start","End","Ref","Alt")]
+annovar.ins
+
+# Checking INS position in b38 ref genome
+#getSeq(b38,"chr12",start=51346631,end=51346631)
+
+# Translating INS coordinates from annovar to vcf
+vcf.ins.chr <- annovar.ins$Chr
+vcf.ins.pos <- annovar.ins$Start
+
+vcf.ins.ref <- getSeq(b38,vcf.ins.chr,
+                      start=vcf.ins.pos,
+                      end=vcf.ins.pos)
+
+vcf.ins.alt <- paste0(vcf.ins.ref, annovar.ins$Alt, collapse="")
+
+vcf.ins <- c(vcf.ins.chr, 
+             as.character(vcf.ins.pos), 
+             as.character(vcf.ins.ref), 
+             as.character(vcf.ins.alt))
+vcf.ins
+
+# Make the key to search multisample VCF
+vcf_key <- paste(vcf.ins, collapse="_")
+vcf_key
+
+# Check this INS in Multisample VCF
+if(vcf_key %in% variants.df$key){
+  variants.df[vcf_key,c("CHROM","POS","REF","ALT")]
+} else {
+  cat("Can't find variant in multisample VCF\n")
+}
+
+# Clean-up
+rm(annovar.ins,vcf.ins,vcf.ins.chr,vcf.ins.pos,vcf.ins.ref,vcf.ins.alt,vcf_key)
+
+```
+
+# Count types of variants
+
+Count SNP, DEL and INS variants. Check if any variants fall out of these categories: so they should be linked manually.  
+
+```{r}
+
+# Count SNP/SNV-s
+SNP <- SJRHB020.df$Ref!="-" & SJRHB020.df$Alt!="-" & 
+  nchar(SJRHB020.df$Ref)==1 & nchar(SJRHB020.df$Alt)==1
+cat("There are",sum(SNP),"SNP-s\n")
+
+# Count Insertions
+INS <- SJRHB020.df$Ref=="-" & SJRHB020.df$Alt!="-"
+cat("There are",sum(INS),"insertions\n")
+
+# Count Deletions
+DEL <- SJRHB020.df$Ref!="-" & SJRHB020.df$Alt=="-"
+cat("There are",sum(DEL),"deletions\n")
+
+# Count remained non-translatable variants
+# (such as multi-nucleotide variants, e.g. AT -> CGG)
+MNV <- !SNP & !INS & !DEL
+
+if(sum(MNV)>0){
+  cat(sum(MNV),"variants renain to be translated manually\n")
+} else {
+  cat("There is no remaining non-translated variants\n")
+}
+
+# Check for absurd -/- variants
+ABSV <- sum(SJRHB020.df$Ref=="-" & SJRHB020.df$Alt=="-")
+
+if(sum(ABSV)>0){
+  cat("There are",ABSV,"absurd -/- variants\n")
+} else {
+  cat("There is no absurd -/- variants\n")
+}
+
+# Cleran-up
+rm(ABSV,SNP,INS,DEL,MNV)
+
+```
+
+# Save data
+
+```{r}
+
+save.image("s04_linking_Annovar_to_VCF.RData")
+
+```
+
+# Final section
+
+```{r}
+
+ls()
+sessionInfo()
+Sys.time()
+gc()
+
+```
