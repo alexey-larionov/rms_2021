@@ -1,0 +1,197 @@
+---
+title: "Explore BASS scores"
+author: "Alexey Larionov"
+date: "31 Mar 2021"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float: true
+editor_options:
+  chunk_output_type: console
+---
+
+# Summary
+
+Explore consistency of BASS scores for the same variant in different samples  
+
+Expected high missingness  
+
+Unexpected one outlining case with high score ranges  
+
+# Start section
+
+<style>
+pre {
+  overflow-x: auto;
+}
+pre code {
+  word-wrap: normal;
+  white-space: pre;
+}
+</style>
+
+```{r echo=F}
+#options(width = 999)
+```
+
+```{r}
+
+# Time stamp
+Sys.time()
+
+# Clenan-up
+rm(list=ls())
+graphics.off()
+
+# Memory
+gc()
+
+# Options
+options(stringsAsFactors=F)
+
+# Files and folders
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+#data_fiolder <- file.path(base_folder,"data","s09_explore_bass_scores")
+scripts_fiolder <- file.path(base_folder,"scripts","s09_explore_bass_scores")
+setwd(scripts_fiolder)
+
+# Libraries
+library(dplyr)
+
+```
+
+# Load data
+
+```{r}
+
+load(file.path(base_folder,"scripts","s08_read_zheng_to_se","s01_read_zheng_to_se.RData"))
+
+rm(functions_fiolder, data_fiolder)
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+scripts_fiolder <- file.path(base_folder,"scripts","s09_explore_bass_scores")
+
+```
+
+# Check result
+
+```{r}
+
+zheng.se
+
+colData(zheng.se)
+rowRanges(zheng.se)[,1:2]
+
+#head(names(rowRanges(zheng.se)))
+
+assay(zheng.se,"genotypes")[1:15,1:5]
+
+metadata(zheng.se)
+
+```
+
+# Explore scores
+
+```{r}
+
+#View(assay(zheng.se,"scores"))
+
+scores.mx <- assay(zheng.se,"scores")
+
+scores.mx[1:15,1:5]
+
+# Count sufficiently high scores
+sum(!is.na(scores.mx))
+sum(scores.mx>=0.8, na.rm=T)
+sum(scores.mx>=0.7, na.rm=T)
+sum(scores.mx>=0.6, na.rm=T)
+
+```
+
+## Call rates
+
+```{r}
+
+# Overall call rate
+sum(!is.na(scores.mx))/(nrow(scores.mx)*ncol(scores.mx))
+
+# Call rate
+call_rate.udf <- function(x){sum(!is.na(x))/length(x)}
+
+bass_call_rate_pv <- apply(scores.mx, 1, call_rate.udf)
+hist(bass_call_rate_pv, main="Bass call rate per variant")
+
+bass_call_rate_ps <- apply(scores.mx, 2, call_rate.udf)
+hist(bass_call_rate_ps, main="Bass call rate per sample")
+
+rm(call_rate.udf,bass_call_rate_pv,bass_call_rate_ps)
+
+```
+
+## Range within variant
+
+```{r}
+
+# Range function
+range.udf <- function(x){
+  if(sum(!is.na(x)) <= 1){range=NA}
+  if(sum(!is.na(x)) > 1){range=max(x) - min(x)}
+  return(range)
+}
+
+bass_range <- apply(scores.mx, 1, range.udf)
+hist(bass_range, ylim=c(0,27), lab=T)
+
+#View(scores.mx[bass_range>0.2 & !is.na(bass_range),]) # "RMSzhang_SJRHB024"
+#View(assay(zheng.se,"genotypes")[bass_range>0.2 & !is.na(bass_range),]) # "RMSzhang_SJRHB024"
+scores.mx[bass_range>0.2 & !is.na(bass_range),] # "RMSzhang_SJRHB024"
+
+rowRanges(zheng.se)[bass_range>0.2 & !is.na(bass_range),1:2]
+
+#View(as.data.frame(rowRanges(zheng.se)[bass_range>0.2 & !is.na(bass_range),]))
+rowRanges(zheng.se)[bass_range>0.2 & !is.na(bass_range),]
+
+scores_wo_outlier.mx <- scores.mx[,colnames(scores.mx)!="RMSzhang_SJRHB024"]
+dim(scores_wo_outlier.mx)
+
+bass_range_wo_outlier <- apply(scores_wo_outlier.mx, 1, range.udf)
+hist(bass_range_wo_outlier, ylim=c(0,23), lab=T)
+
+rm(bass_range,bass_range_wo,scores_wo.mx,bass_range.udf)
+
+```
+
+## BASS per sample 
+
+```{r}
+
+boxplot(x = as.list(as.data.frame(scores.mx)), xaxt='n', 
+        main="BASS scores per sample")
+abline(h=0.8, col="red", lty=2)
+
+mean_bass_per_sample <- apply(scores.mx, 2, mean, na.rm=T)
+
+barplot(mean_bass_per_sample, xaxt='n')
+
+rm(mean_bass_per_sample)
+
+```
+
+# Save data
+
+```{r}
+
+save.image("s01_explore_bass_scores.RData")
+
+```
+
+# Final section
+
+```{r}
+
+ls()
+sessionInfo()
+Sys.time()
+gc()
+
+```
