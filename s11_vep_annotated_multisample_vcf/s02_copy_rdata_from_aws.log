@@ -1,0 +1,19 @@
+Copy R-Data from AWS
+Tue 13 Apr 2021 16:31:52 BST
+
+aws_host 3.10.118.163
+aws_folder /home/share/data/s04_read_to_R
+aws_rdata s01_import_vcf_to_R.RData
+data folder /Users/alexey/Documents/mg/s2021/zhang_tests/data/s11_vep_annotated_multisample_vcf
+
+Copying ...
+
+receiving file list ... done
+s01_import_vcf_to_R.RData
+
+sent 38 bytes  received 64.45M bytes  6.78M bytes/sec
+total size is 64.43M  speedup is 1.00
+
+Done
+Tue 13 Apr 2021 16:32:01 BST
+

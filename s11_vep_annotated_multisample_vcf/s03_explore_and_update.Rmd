@@ -1,0 +1,277 @@
+---
+title: "Explore and update"
+author: "Alexey Larionov"
+date: "14 Apr 2021"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float: true
+editor_options:
+  chunk_output_type: console
+---
+
+# Summary
+
+- Explore *variants.df*  
+    + no data in FILTER  
+    + make CHROM an ordered factor  
+    + recode dors to NA  
+    + split SIFT and PolyPhen  
+    + make MAX_AF & CADD numeric  
+- Calculate additive genotypes  
+
+<style>
+pre{
+  overflow-x: auto;
+}
+pre code{
+  word-wrap: normal;
+  white-space: pre;
+}
+</style>
+
+```{r echo=F}
+options(width=999)
+```
+
+# Start section
+
+```{r}
+
+# Time
+Sys.time()
+
+# Clean up
+rm(list=ls())
+graphics.off()
+gc()
+
+# Options
+options(stringsAsFactors = F)
+
+# Working folders
+# Files and folders
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+data_folder <- file.path(base_folder,"data","s11_vep_annotated_multisample_vcf")
+scripts_folder <- file.path(base_folder,"scripts","s11_vep_annotated_multisample_vcf")
+setwd(scripts_folder)
+
+# Required libraries
+library(dplyr)
+
+```
+
+# Load data
+
+```{r}
+
+load(file.path(data_folder,"s01_import_vcf_to_R.RData"))
+
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+data_folder <- file.path(base_folder,"data","s11_vep_annotated_multisample_vcf")
+scripts_folder <- file.path(base_folder,"scripts","s11_vep_annotated_multisample_vcf")
+
+```
+
+# Check data
+
+```{r}
+
+ls()
+
+dim(vcf_header.df)
+dim(variants.df)
+
+dim(dp.mx)
+dim(gq.mx)
+dim(gt.mx)
+dim(ad.mx)
+
+```
+
+# Explore and update variants
+
+## VCF header and variant.df
+
+```{r}
+
+table(vcf_header.df$Tag, useNA = "always")
+ncol(variants.df)
+sum(colnames(variants.df) %in% vcf_header.df$ID)
+colnames(variants.df)[! colnames(variants.df) %in% vcf_header.df$ID]
+
+```
+
+## Filter
+
+```{r}
+
+variants.df %>% 
+  group_by(FILTER) %>% 
+  summarise(counts=n()) %>% 
+  arrange(desc(counts))
+
+```
+
+## QUAL
+
+```{r}
+
+quantile(variants.df$QUAL)
+
+hist(variants.df$QUAL)
+hist(variants.df$QUAL[variants.df$QUAL<10000])
+hist(log10(variants.df$QUAL))
+
+```
+
+## Chromosomes
+
+Update CHROM in variants.df: make them ordered
+
+```{r}
+
+chromosomes_order <- c("chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9","chr10",
+                       "chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20",
+                       "chr21","chr22","chrX","chrY","chrM")
+
+variants.df$CHROM <- ordered(variants.df$CHROM, chromosomes_order)
+summary(variants.df$CHROM)
+
+barplot(summary(variants.df$CHROM),las=2,
+        main="Variant counts per chromosome")
+
+rm(chromosomes_order)
+
+```
+
+## Recode dots to missed  
+
+```{r}
+
+sum(is.na(variants.df))
+
+sum(variants.df=="", na.rm=T)
+
+sum(variants.df==".", na.rm=T)
+NA -> variants.df[variants.df=="."]
+
+sum(is.na(variants.df))
+11104403 + 7051764 == 18156167
+
+```
+
+## SIFT & PolyPhen 
+
+```{r}
+
+# Check SIFT & PolyPhen
+variants.df$vep_SIFT[variants.df$vep_SIFT != "."][1:15]
+variants.df$vep_PolyPhen[variants.df$vep_PolyPhen != "."][1:15]
+
+# Split SIFT
+variants.df <- 
+  variants.df %>% 
+  mutate(SIFT_call=sub("\\(.*\\)","",vep_SIFT)) %>% 
+  mutate(SIFT_score=as.numeric(
+    sub(".*\\(","", sub("\\)","",vep_SIFT)))) %>% 
+  select(-vep_SIFT)
+
+# Split PolyPhen
+variants.df <- 
+  variants.df %>% 
+  mutate(PolyPhen_call=sub("\\(.*\\)","",vep_PolyPhen)) %>% 
+  mutate(PolyPhen_score=as.numeric(
+    sub(".*\\(","", sub("\\)","",vep_PolyPhen)))) %>% 
+  select(-vep_PolyPhen)
+
+# Check resukt
+variants.df %>% 
+  group_by(SIFT_call) %>% 
+  summarise(counts=n()) %>% 
+  arrange(desc(counts))
+
+variants.df %>% 
+  group_by(PolyPhen_call) %>% 
+  summarise(counts=n()) %>% 
+  arrange(desc(counts))
+
+```
+
+## MAX_AF, gnomAD & CADD
+
+```{r}
+
+str(variants.df[,c("vep_MAX_AF","vep_gnomAD_AF","vep_CADD_PHRED","vep_CADD_RAW")])
+
+variants.df$vep_MAX_AF[!is.na(variants.df$vep_MAX_AF)][1:5]
+variants.df$vep_gnomAD_AF[!is.na(variants.df$vep_gnomAD_AF)][1:5]
+
+variants.df$vep_MAX_AF <- as.numeric(as.vector(variants.df$vep_MAX_AF))
+variants.df$vep_gnomAD_AF <- as.numeric(as.vector(variants.df$vep_gnomAD_AF))
+variants.df$vep_CADD_RAW <- as.numeric(as.vector(variants.df$vep_CADD_RAW))
+variants.df$vep_CADD_PHRED <- as.numeric(as.vector(variants.df$vep_CADD_PHRED))
+
+str(variants.df[,c("vep_MAX_AF","vep_gnomAD_AF","vep_CADD_PHRED","vep_CADD_RAW")]) 
+
+variants.df$vep_MAX_AF[!is.na(variants.df$vep_MAX_AF)][1:5]
+variants.df$vep_gnomAD_AF[!is.na(variants.df$vep_gnomAD_AF)][1:5]
+
+```
+
+# Additive genotypes
+
+```{r}
+
+gt.mx[5:15,1:5]
+
+table(gt.mx, useNA = "always")
+
+gt_add.mx <- gt.mx
+
+0 -> gt_add.mx[ gt.mx == "0/0" ]
+1 -> gt_add.mx[ gt.mx == "1/0" ]
+1 -> gt_add.mx[ gt.mx == "0/1" ]
+2 -> gt_add.mx[ gt.mx == "1/1" ]
+
+table(gt_add.mx, useNA = "always")
+
+gt_add.mx[5:15,1:5]
+
+gt_add.mx <- matrix(as.numeric(gt_add.mx),nrow=nrow(gt_add.mx))
+colnames(gt.mx) -> colnames(gt_add.mx)
+rownames(gt.mx) -> rownames(gt_add.mx)
+
+gt_add.mx[5:15,1:5]
+
+```
+
+# Summarize and save
+
+```{r}
+
+ls()
+
+dim(vcf_header.df)
+dim(variants.df)
+
+dim(dp.mx)
+dim(gq.mx)
+dim(gt.mx)
+dim(ad.mx)
+dim(gt_add.mx)
+
+save.image(file.path(data_folder,"s03_explore_and_update.RData"))
+
+```
+
+# Final section
+
+```{r}
+
+sessionInfo()
+Sys.time()
+gc()
+
+```

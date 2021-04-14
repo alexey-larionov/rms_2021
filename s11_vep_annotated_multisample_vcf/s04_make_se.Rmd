@@ -1,0 +1,151 @@
+---
+title: "Save VCF data as Summarised experiment"
+author: "Alexey Larionov"
+date: "14 Apr 2021"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float: true
+editor_options:
+  chunk_output_type: console
+---
+
+# Summary
+
+- Pack all data imported from multisample VCF to Summarised Experiment  
+- Keep variants info (colData) as **data.frame**, without converting it to **GRanges**  
+
+<style>
+pre{
+  overflow-x: auto;
+}
+pre code{
+  word-wrap: normal;
+  white-space: pre;
+}
+</style>
+
+```{r echo=F}
+options(width=999)
+```
+
+# Start section
+
+```{r}
+
+# Time
+Sys.time()
+
+# Clean up
+rm(list=ls())
+graphics.off()
+gc()
+
+# Options
+options(stringsAsFactors = F)
+
+# Working folders
+# Files and folders
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+data_folder <- file.path(base_folder,"data","s11_vep_annotated_multisample_vcf")
+scripts_folder <- file.path(base_folder,"scripts","s11_vep_annotated_multisample_vcf")
+setwd(scripts_folder)
+
+# Required libraries
+library(dplyr)
+
+```
+
+# Load data
+
+```{r}
+
+load(file.path(data_folder,"s03_explore_and_update.RData"))
+
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+data_folder <- file.path(base_folder,"data","s11_vep_annotated_multisample_vcf")
+scripts_folder <- file.path(base_folder,"scripts","s11_vep_annotated_multisample_vcf")
+
+library(SummarizedExperiment)
+
+```
+
+# Check data
+
+```{r}
+
+ls()
+
+dim(vcf_header.df)
+dim(variants.df)
+
+dim(dp.mx)
+dim(gq.mx)
+dim(gt.mx)
+dim(ad.mx)
+dim(gt_add.mx)
+
+```
+
+# Make SummarizedExperiment
+
+```{r}
+
+# Add rownames to variants
+variants.df[1:5,1:5]
+rownames(variants.df) <- variants.df$ID
+
+# Sanity checks
+sum(rownames(variants.df) != rownames(gt.mx))
+sum(rownames(variants.df) != rownames(gt_add.mx))
+sum(rownames(variants.df) != rownames(dp.mx))
+sum(rownames(variants.df) != rownames(gq.mx))
+sum(rownames(variants.df) != rownames(ad.mx))
+
+sum(colnames(gt.mx) != colnames(gt_add.mx))
+sum(colnames(gt.mx) != colnames(dp.mx))
+sum(colnames(gt.mx) != colnames(gq.mx))
+sum(colnames(gt.mx) != colnames(ad.mx))
+
+# Column data
+samples.df <- data.frame(id=colnames(gt.mx),
+                         study="Zheng")
+
+# Metadata (optional)
+metadata.ls <- list(vcf_header=vcf_header.df)
+  
+# Put all data to a SummarizedExperiment container
+zheng_multisample_vcf.se <- SummarizedExperiment(
+  assays=list(gt=gt.mx, gt_add=gt_add.mx, dp=dp.mx, gq=gq.mx, ad=ad.mx),
+  rowData=variants.df, 
+  colData=samples.df, 
+  metadata=metadata.ls)
+
+# Check result
+zheng_multisample_vcf.se
+
+# Clean-up
+rm(samples.df,metadata.ls,variants.df,gt.mx,gt_add.mx,dp.mx,gq.mx,ad.mx,vcf_header.df)
+
+```
+
+# Summarize and save
+
+```{r}
+
+ls()
+
+save.image(file.path(data_folder,"s04_make_se.RData"))
+
+```
+
+# Final section
+
+```{r}
+
+sessionInfo()
+Sys.time()
+gc()
+
+```

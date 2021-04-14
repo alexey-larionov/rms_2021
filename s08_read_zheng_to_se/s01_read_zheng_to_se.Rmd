@@ -1,7 +1,7 @@
 ---
 title: "Read germline Zheng data to a SummarizedExperiment"
 author: "Alexey Larionov"
-date: "25 Feb 2021"
+date: "14 Apr 2021"
 output:
   html_document:
     toc: true
@@ -48,10 +48,10 @@ options(stringsAsFactors=F)
 
 # Files and folders
 base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
-data_fiolder <- file.path(base_folder,"data","d03_germline_annotated_files")
+data_folder <- file.path(base_folder,"data","d03_germline_annotated_files")
 functions_fiolder <- file.path(base_folder,"scripts","f01_functions")
-scripts_fiolder <- file.path(base_folder,"scripts","s08_read_zheng_to_se")
-setwd(scripts_fiolder)
+scripts_folder <- file.path(base_folder,"scripts","s08_read_zheng_to_se")
+setwd(scripts_folder)
 
 # Libraries 
 library(GenomicRanges)
@@ -77,9 +77,9 @@ rm(working_folder,absent_genes_9.df,genes_628.gr,genes_658.grl,genes_667.df,
 
 # Update folders
 base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
-data_fiolder <- file.path(base_folder,"data","d03_germline_annotated_files")
-functions_fiolder <- file.path(base_folder,"scripts","f01_functions")
-scripts_fiolder <- file.path(base_folder,"scripts","s08_read_zheng_to_se")
+data_folder <- file.path(base_folder,"data","d03_germline_annotated_files")
+functions_folder <- file.path(base_folder,"scripts","f01_functions")
+scripts_folder <- file.path(base_folder,"scripts","s08_read_zheng_to_se")
 
 # Check the genes list
 summary(genes_655.gr)
@@ -102,7 +102,7 @@ seq_info_b38 <- Seqinfo(genome="hg38")
 
 ```{r}
 
-samples <- scan(file.path(data_fiolder,"zhang.GL.txt"),what="character")
+samples <- scan(file.path(data_folder,"zhang.GL.txt"),what="character")
 
 ```
 

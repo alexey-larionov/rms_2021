@@ -1,0 +1,19 @@
+Copy data from AWS
+Tue 13 Apr 2021 16:04:21 BST
+
+aws_host 3.10.118.163
+aws_folder /home/share/data/s03_annotate
+aws_vcf zhang_hg38.bwa.QC.MA-flag.MA-split.ID.std-Chr.Reheaded.ClinVar.VEP.split-VEP.vcf.gz
+data folder /Users/alexey/Documents/mg/s2021/zhang_tests/data/s11_vep_annotated_multisample_vcf
+
+Copying ...
+
+receiving file list ... done
+zhang_hg38.bwa.QC.MA-flag.MA-split.ID.std-Chr.Reheaded.ClinVar.VEP.split-VEP.vcf.gz
+
+sent 38 bytes  received 97.25M bytes  8.46M bytes/sec
+total size is 97.23M  speedup is 1.00
+
+Done
+Tue 13 Apr 2021 16:04:33 BST
+

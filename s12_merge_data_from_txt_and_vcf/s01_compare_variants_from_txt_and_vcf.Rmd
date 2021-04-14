@@ -1,0 +1,247 @@
+---
+title: "Compare variants from text files and multisample VCF"
+author: "Alexey Larionov"
+date: "14 Apr 2021"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float: true
+editor_options:
+  chunk_output_type: console
+---
+
+# Summary
+
+Most TXT variants are found in VCF, except for a handful of multi-allelic variants (14 of 4,642), which have to be excluded  
+
+<style>
+pre{
+  overflow-x: auto;
+}
+pre code{
+  word-wrap: normal;
+  white-space: pre;
+}
+</style>
+
+```{r echo=F}
+options(width=999)
+```
+
+# Start section
+
+```{r}
+
+# Time
+Sys.time()
+
+# Clean up
+rm(list=ls())
+graphics.off()
+gc()
+
+# Options
+options(stringsAsFactors = F)
+
+# Working folders
+# Files and folders
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+data_folder <- file.path(base_folder,"data","s12_merge_data_from_txt_and_vcf")
+#dir.create(data_folder)
+scripts_folder <- file.path(base_folder,"scripts","s12_merge_data_from_txt_and_vcf")
+setwd(scripts_folder)
+
+# Required libraries
+library(dplyr)
+
+```
+
+# Load data
+
+## Variants from text files
+
+```{r}
+
+# Load
+load(file.path(base_folder,"data/s10_add_vcf_coordinates/s01_add_vcf_coordinates.RData"))
+
+# Restore folders
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+data_folder <- file.path(base_folder,"data","s12_merge_data_from_txt_and_vcf")
+scripts_folder <- file.path(base_folder,"scripts","s12_merge_data_from_txt_and_vcf")
+
+# Check SE
+zheng.se
+
+# Extract variants data
+txt_variants.gr <- rowRanges(zheng.se)
+summary(txt_variants.gr)
+head(txt_variants.gr)[,1:2]
+
+txt_variants.df <- as.data.frame(txt_variants.gr)
+dim(txt_variants.df)
+txt_variants.df[1:6,1:7]
+
+# Clean-up
+rm(zheng.se, variants.df, functions_folder, txt_variants.gr)
+
+```
+
+## Variants from nultisample VCF
+
+```{r}
+
+# Load
+load(file.path(base_folder,"data/s11_vep_annotated_multisample_vcf/s04_make_se.RData"))
+
+# Restore folders
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+data_folder <- file.path(base_folder,"data","s12_merge_data_from_txt_and_vcf")
+scripts_folder <- file.path(base_folder,"scripts","s12_merge_data_from_txt_and_vcf")
+
+# Check SE
+zheng_multisample_vcf.se
+
+# Extract variants data
+vcf_variants.df <- as.data.frame(rowData(zheng_multisample_vcf.se))
+dim(vcf_variants.df)
+vcf_variants.df[1:5,1:5]
+
+# Clean-up
+rm(zheng_multisample_vcf.se)
+
+```
+
+# Shared variants
+
+```{r}
+
+shared_ids <- txt_variants.df$VCF_ID %in% vcf_variants.df$ID
+base::table(shared_ids, useNA = "always")
+
+txt_variants_shared.df <- txt_variants.df[shared_ids,]
+base::table(txt_variants_shared.df$var_type)
+
+rm(txt_variants_shared.df)
+
+```
+
+# Missed variants
+
+```{r}
+
+txt_variants_missed.df <- txt_variants.df[!shared_ids,]
+txt_variants_missed.df[,"VCF_ID"]
+
+# 1) chr1_114398011_AA_A
+vcf_variants.df %>% 
+  filter(CHROM=="chr1",POS==114398011 - 1) %>% 
+  select(CHROM,POS,ID,REF,ALT)
+
+# 2) chr2_120974781_TGT_T - shift by -2
+vcf_variants.df %>% 
+  filter(CHROM=="chr2",POS==120974781 - 2) %>% 
+  select(CHROM,POS,ID,REF,ALT)
+
+# 3) chr2_211713655_AA_A
+vcf_variants.df %>% 
+  filter(CHROM=="chr2",POS==211713655 - 1) %>% 
+  select(CHROM,POS,ID,REF,ALT)
+
+# 4) chr7_5997427_AA_A
+vcf_variants.df %>% 
+  filter(CHROM=="chr7",POS==5997427 - 1) %>% 
+  select(CHROM,POS,ID,REF,ALT)
+
+# 5) chr7_42223337_A_AA
+vcf_variants.df %>% 
+  filter(CHROM=="chr7",POS==42223337 - 1) %>% 
+  select(CHROM,POS,ID,REF,ALT)
+
+# 6) chr7_116769622_TT_T
+vcf_variants.df %>% 
+  filter(CHROM=="chr7",POS==116769622 - 1) %>% 
+  select(CHROM,POS,ID,REF,ALT)
+
+# 7) chr8_43013313_TT_T
+vcf_variants.df %>% 
+  filter(CHROM=="chr8",POS==43013313 - 1) %>% 
+  select(CHROM,POS,ID,REF,ALT)
+
+# 8) chr10_113144090_GTGTGTGTGTCTGTGTGTGTGTGTG_G - shift by 2
+vcf_variants.df %>% 
+  filter(CHROM=="chr10",POS==113144090 - 2) %>% 
+  select(CHROM,POS,ID,REF,ALT)
+
+# 9) chr11_32428699_G_GG
+vcf_variants.df %>% 
+  filter(CHROM=="chr11",POS==32428699 - 1) %>% 
+  select(CHROM,POS,ID,REF,ALT)
+
+# 10) chr13_20081999_TT_T
+vcf_variants.df %>% 
+  filter(CHROM=="chr13",POS==20081999 - 1) %>% 
+  select(CHROM,POS,ID,REF,ALT)
+
+# 10) chr13_20081999_TT_T
+vcf_variants.df %>% 
+  filter(CHROM=="chr13",POS==20081999 - 1) %>% 
+  select(CHROM,POS,ID,REF,ALT)
+
+# 11) chr14_95099760_AC_A
+vcf_variants.df %>% 
+  filter(CHROM=="chr14",POS==95099760 - 1) %>% 
+  select(CHROM,POS,ID,REF,ALT)
+
+# 12) chr20_45348236_C_CC
+vcf_variants.df %>% 
+  filter(CHROM=="chr20",POS==45348236 - 1) %>% 
+  select(CHROM,POS,ID,REF,ALT)
+
+# 13) chr21_42760757_CC_C
+vcf_variants.df %>% 
+  filter(CHROM=="chr21",POS==42760757 - 1) %>% 
+  select(CHROM,POS,ID,REF,ALT)
+
+# 14) chrX_45076680_TT_T
+vcf_variants.df %>% 
+  filter(CHROM=="chrX",POS==45076680 - 1) %>% 
+  select(CHROM,POS,ID,REF,ALT)
+
+```
+
+# Biallelic variants
+
+```{r}
+
+vcf_variants_biallelic.df <- vcf_variants.df %>% filter(MULTIALLELIC==F)
+dim(vcf_variants_biallelic.df)
+
+shared_biallelics <- txt_variants.df$VCF_ID %in% vcf_variants_biallelic.df$ID
+base::table(shared_biallelics, useNA = "always")
+sum(!shared_ids & !shared_biallelics)
+
+rm(shared_ids,shared_biallelics,vcf_variants_biallelic.df,txt_variants_missed.df)
+
+```
+
+# Summarize and save
+
+```{r}
+
+ls()
+
+save.image(file.path(data_folder,"s01_compare_variants_from_txt_and_vcf.RData"))
+
+```
+
+# Final section
+
+```{r}
+
+sessionInfo()
+Sys.time()
+gc()
+
+```
