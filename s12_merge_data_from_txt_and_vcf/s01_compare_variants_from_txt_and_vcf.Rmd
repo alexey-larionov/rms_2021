@@ -137,7 +137,7 @@ txt_variants_missed.df <- txt_variants.df[!shared_ids,]
 txt_variants_missed.df[,"VCF_ID"]
 
 selected_fields <- c("CHROM","POS","ID","REF","ALT","vep_Consequence","vep_MAX_AF",
-                     "SIFT_call","PolyPhen_call","vep_CADD_PHRED","CLNSIG")
+                     "vep_MAX_AF_POPS","SIFT_call","PolyPhen_call","vep_CADD_PHRED","CLNSIG")
 
 # 1) chr1_114398011_AA_A
 vcf_variants.df %>% 

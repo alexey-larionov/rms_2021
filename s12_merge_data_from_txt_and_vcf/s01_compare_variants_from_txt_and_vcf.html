@@ -290,7 +290,7 @@ pre code{
 <h1 number="2"><span class="header-section-number">2</span> Start section</h1>
 <pre class="r"><code># Time
 Sys.time()</code></pre>
-<pre><code>## [1] &quot;2021-04-15 09:05:38 BST&quot;</code></pre>
+<pre><code>## [1] &quot;2021-04-15 13:46:48 BST&quot;</code></pre>
 <pre class="r"><code># Clean up
 rm(list=ls())
 graphics.off()
@@ -488,7 +488,7 @@ base::table(txt_variants_shared.df$var_type, useNA = &quot;always&quot;)</code><
 txt_variants_missed.df[,&quot;VCF_ID&quot;]</code></pre>
 <pre><code>##  [1] &quot;chr1_114398011_AA_A&quot;                         &quot;chr2_120974781_TGT_T&quot;                        &quot;chr2_211713655_AA_A&quot;                         &quot;chr7_5997427_AA_A&quot;                           &quot;chr7_42223337_A_AA&quot;                          &quot;chr7_116769622_TT_T&quot;                         &quot;chr8_43013313_TT_T&quot;                          &quot;chr10_113144090_GTGTGTGTGTCTGTGTGTGTGTGTG_G&quot; &quot;chr11_32428699_G_GG&quot;                         &quot;chr13_20081999_TT_T&quot;                         &quot;chr14_95099760_AC_A&quot;                         &quot;chr20_45348236_C_CC&quot;                         &quot;chr21_42760757_CC_C&quot;                         &quot;chrX_45076680_TT_T&quot;</code></pre>
 <pre class="r"><code>selected_fields &lt;- c(&quot;CHROM&quot;,&quot;POS&quot;,&quot;ID&quot;,&quot;REF&quot;,&quot;ALT&quot;,&quot;vep_Consequence&quot;,&quot;vep_MAX_AF&quot;,
-                     &quot;SIFT_call&quot;,&quot;PolyPhen_call&quot;,&quot;vep_CADD_PHRED&quot;,&quot;CLNSIG&quot;)
+                     &quot;vep_MAX_AF_POPS&quot;,&quot;SIFT_call&quot;,&quot;PolyPhen_call&quot;,&quot;vep_CADD_PHRED&quot;,&quot;CLNSIG&quot;)
 
 # 1) chr1_114398011_AA_A
 vcf_variants.df %&gt;% 
@@ -498,103 +498,103 @@ vcf_variants.df %&gt;%
 ## ℹ Use `all_of(selected_fields)` instead of `selected_fields` to silence this message.
 ## ℹ See &lt;https://tidyselect.r-lib.org/reference/faq-external-vector.html&gt;.
 ## This message is displayed once per session.</code></pre>
-<pre><code>##                       CHROM       POS                    ID REF ALT vep_Consequence vep_MAX_AF SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
-## chr1_114398010_CAA_C   chr1 114398010  chr1_114398010_CAA_C CAA   C  intron_variant     0.2054      &lt;NA&gt;          &lt;NA&gt;          16.91   &lt;NA&gt;
-## chr1_114398010_CAA_CA  chr1 114398010 chr1_114398010_CAA_CA CAA  CA  intron_variant     0.7507      &lt;NA&gt;          &lt;NA&gt;          16.88   &lt;NA&gt;</code></pre>
+<pre><code>##                       CHROM       POS                    ID REF ALT vep_Consequence vep_MAX_AF vep_MAX_AF_POPS SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
+## chr1_114398010_CAA_C   chr1 114398010  chr1_114398010_CAA_C CAA   C  intron_variant     0.2054             EAS      &lt;NA&gt;          &lt;NA&gt;          16.91   &lt;NA&gt;
+## chr1_114398010_CAA_CA  chr1 114398010 chr1_114398010_CAA_CA CAA  CA  intron_variant     0.7507             AMR      &lt;NA&gt;          &lt;NA&gt;          16.88   &lt;NA&gt;</code></pre>
 <pre class="r"><code># 2) chr2_120974781_TGT_T - shift by -2
 vcf_variants.df %&gt;% 
   filter(CHROM==&quot;chr2&quot;, POS&gt;=120974781 - 2,  POS&lt;=120974781 + 2) %&gt;% 
   select(selected_fields)</code></pre>
-<pre><code>##                          CHROM       POS                       ID   REF ALT vep_Consequence vep_MAX_AF SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
-## chr2_120974779_AGTGT_AGT  chr2 120974779 chr2_120974779_AGTGT_AGT AGTGT AGT  intron_variant     0.7137      &lt;NA&gt;          &lt;NA&gt;          0.777   &lt;NA&gt;
-## chr2_120974779_AGTGT_A    chr2 120974779   chr2_120974779_AGTGT_A AGTGT   A  intron_variant     0.0399      &lt;NA&gt;          &lt;NA&gt;          0.762   &lt;NA&gt;</code></pre>
+<pre><code>##                          CHROM       POS                       ID   REF ALT vep_Consequence vep_MAX_AF vep_MAX_AF_POPS SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
+## chr2_120974779_AGTGT_AGT  chr2 120974779 chr2_120974779_AGTGT_AGT AGTGT AGT  intron_variant     0.7137             EUR      &lt;NA&gt;          &lt;NA&gt;          0.777   &lt;NA&gt;
+## chr2_120974779_AGTGT_A    chr2 120974779   chr2_120974779_AGTGT_A AGTGT   A  intron_variant     0.0399             SAS      &lt;NA&gt;          &lt;NA&gt;          0.762   &lt;NA&gt;</code></pre>
 <pre class="r"><code># 3) chr2_211713655_AA_A
 vcf_variants.df %&gt;% 
   filter(CHROM==&quot;chr2&quot;, POS&gt;=211713655 - 2, POS&lt;=211713655 + 2) %&gt;% 
   select(selected_fields)</code></pre>
-<pre><code>##                       CHROM       POS                    ID REF ALT                      vep_Consequence vep_MAX_AF SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
-## chr2_211713654_TAA_T   chr2 211713654  chr2_211713654_TAA_T TAA   T splice_region_variant&amp;intron_variant    0.04008      &lt;NA&gt;          &lt;NA&gt;          0.012 Benign
-## chr2_211713654_TAA_TA  chr2 211713654 chr2_211713654_TAA_TA TAA  TA splice_region_variant&amp;intron_variant    0.47660      &lt;NA&gt;          &lt;NA&gt;          0.005   &lt;NA&gt;</code></pre>
+<pre><code>##                       CHROM       POS                    ID REF ALT                      vep_Consequence vep_MAX_AF vep_MAX_AF_POPS SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
+## chr2_211713654_TAA_T   chr2 211713654  chr2_211713654_TAA_T TAA   T splice_region_variant&amp;intron_variant    0.04008      gnomAD_SAS      &lt;NA&gt;          &lt;NA&gt;          0.012 Benign
+## chr2_211713654_TAA_TA  chr2 211713654 chr2_211713654_TAA_TA TAA  TA splice_region_variant&amp;intron_variant    0.47660      gnomAD_SAS      &lt;NA&gt;          &lt;NA&gt;          0.005   &lt;NA&gt;</code></pre>
 <pre class="r"><code># 4) chr7_5997427_AA_A
 vcf_variants.df %&gt;% 
   filter(CHROM==&quot;chr7&quot;, POS&gt;=5997427 - 2, POS&lt;=5997427 + 2) %&gt;% 
   select(selected_fields)</code></pre>
-<pre><code>##                     CHROM     POS                  ID REF ALT                      vep_Consequence vep_MAX_AF SIFT_call PolyPhen_call vep_CADD_PHRED               CLNSIG
-## chr7_5997426_GAA_G   chr7 5997426  chr7_5997426_GAA_G GAA   G splice_region_variant&amp;intron_variant     0.1845      &lt;NA&gt;          &lt;NA&gt;          2.064 Benign/Likely_benign
-## chr7_5997426_GAA_GA  chr7 5997426 chr7_5997426_GAA_GA GAA  GA splice_region_variant&amp;intron_variant     0.4931      &lt;NA&gt;          &lt;NA&gt;          2.030                 &lt;NA&gt;</code></pre>
+<pre><code>##                     CHROM     POS                  ID REF ALT                      vep_Consequence vep_MAX_AF vep_MAX_AF_POPS SIFT_call PolyPhen_call vep_CADD_PHRED               CLNSIG
+## chr7_5997426_GAA_G   chr7 5997426  chr7_5997426_GAA_G GAA   G splice_region_variant&amp;intron_variant     0.1845      gnomAD_EAS      &lt;NA&gt;          &lt;NA&gt;          2.064 Benign/Likely_benign
+## chr7_5997426_GAA_GA  chr7 5997426 chr7_5997426_GAA_GA GAA  GA splice_region_variant&amp;intron_variant     0.4931             EAS      &lt;NA&gt;          &lt;NA&gt;          2.030                 &lt;NA&gt;</code></pre>
 <pre class="r"><code># 5) chr7_42223337_A_AA
 vcf_variants.df %&gt;% 
   filter(CHROM==&quot;chr7&quot;, POS&gt;=42223337 - 2, POS&lt;=42223337 + 2) %&gt;% 
   select(selected_fields)</code></pre>
-<pre><code>##                      CHROM      POS                   ID REF ALT vep_Consequence vep_MAX_AF SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
-## chr7_42223336_GA_GAA  chr7 42223336 chr7_42223336_GA_GAA  GA GAA  intron_variant     0.5288      &lt;NA&gt;          &lt;NA&gt;          2.959   &lt;NA&gt;
-## chr7_42223336_GA_G    chr7 42223336   chr7_42223336_GA_G  GA   G  intron_variant     0.3880      &lt;NA&gt;          &lt;NA&gt;          0.133   &lt;NA&gt;</code></pre>
+<pre><code>##                      CHROM      POS                   ID REF ALT vep_Consequence vep_MAX_AF vep_MAX_AF_POPS SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
+## chr7_42223336_GA_GAA  chr7 42223336 chr7_42223336_GA_GAA  GA GAA  intron_variant     0.5288             EAS      &lt;NA&gt;          &lt;NA&gt;          2.959   &lt;NA&gt;
+## chr7_42223336_GA_G    chr7 42223336   chr7_42223336_GA_G  GA   G  intron_variant     0.3880             AFR      &lt;NA&gt;          &lt;NA&gt;          0.133   &lt;NA&gt;</code></pre>
 <pre class="r"><code># 6) chr7_116769622_TT_T
 vcf_variants.df %&gt;% 
   filter(CHROM==&quot;chr7&quot;, POS&gt;=116769622 - 2, POS&lt;=116769622 + 2) %&gt;% 
   select(selected_fields)</code></pre>
-<pre><code>##                       CHROM       POS                    ID REF ALT vep_Consequence vep_MAX_AF SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
-## chr7_116769621_CTT_C   chr7 116769621  chr7_116769621_CTT_C CTT   C  intron_variant    0.09222      &lt;NA&gt;          &lt;NA&gt;          5.607   &lt;NA&gt;
-## chr7_116769621_CTT_CT  chr7 116769621 chr7_116769621_CTT_CT CTT  CT  intron_variant    0.46650      &lt;NA&gt;          &lt;NA&gt;          5.673   &lt;NA&gt;</code></pre>
+<pre><code>##                       CHROM       POS                    ID REF ALT vep_Consequence vep_MAX_AF vep_MAX_AF_POPS SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
+## chr7_116769621_CTT_C   chr7 116769621  chr7_116769621_CTT_C CTT   C  intron_variant    0.09222      gnomAD_AFR      &lt;NA&gt;          &lt;NA&gt;          5.607   &lt;NA&gt;
+## chr7_116769621_CTT_CT  chr7 116769621 chr7_116769621_CTT_CT CTT  CT  intron_variant    0.46650      gnomAD_FIN      &lt;NA&gt;          &lt;NA&gt;          5.673   &lt;NA&gt;</code></pre>
 <pre class="r"><code># 7) chr8_43013313_TT_T
 vcf_variants.df %&gt;% 
   filter(CHROM==&quot;chr8&quot;, POS&gt;=43013313 - 2, POS&lt;=43013313 + 2) %&gt;% 
   select(selected_fields)</code></pre>
-<pre><code>##                      CHROM      POS                   ID REF ALT vep_Consequence vep_MAX_AF SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
-## chr8_43013312_CTT_C   chr8 43013312  chr8_43013312_CTT_C CTT   C  intron_variant     0.2587      &lt;NA&gt;          &lt;NA&gt;          5.894   &lt;NA&gt;
-## chr8_43013312_CTT_CT  chr8 43013312 chr8_43013312_CTT_CT CTT  CT  intron_variant     0.7723      &lt;NA&gt;          &lt;NA&gt;          5.691   &lt;NA&gt;</code></pre>
+<pre><code>##                      CHROM      POS                   ID REF ALT vep_Consequence vep_MAX_AF vep_MAX_AF_POPS SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
+## chr8_43013312_CTT_C   chr8 43013312  chr8_43013312_CTT_C CTT   C  intron_variant     0.2587             SAS      &lt;NA&gt;          &lt;NA&gt;          5.894   &lt;NA&gt;
+## chr8_43013312_CTT_CT  chr8 43013312 chr8_43013312_CTT_CT CTT  CT  intron_variant     0.7723             AMR      &lt;NA&gt;          &lt;NA&gt;          5.691   &lt;NA&gt;</code></pre>
 <pre class="r"><code># 8) chr10_113144090_GTGTGTGTGTCTGTGTGTGTGTGTG_G - shift by 2
 vcf_variants.df %&gt;% 
   filter(CHROM==&quot;chr10&quot;, POS&gt;=113144090 - 2, POS&lt;=113144090 + 2) %&gt;% 
   select(selected_fields)</code></pre>
-<pre><code>##                                                 CHROM       POS                                              ID                         REF ALT vep_Consequence vep_MAX_AF SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
-## chr10_113144088_CTGTGTGTGTGTCTGTGTGTGTGTGTG_C   chr10 113144088   chr10_113144088_CTGTGTGTGTGTCTGTGTGTGTGTGTG_C CTGTGTGTGTGTCTGTGTGTGTGTGTG   C  intron_variant         NA      &lt;NA&gt;          &lt;NA&gt;          13.87   &lt;NA&gt;
-## chr10_113144088_CTGTGTGTGTGTCTGTGTGTGTGTGTG_CTG chr10 113144088 chr10_113144088_CTGTGTGTGTGTCTGTGTGTGTGTGTG_CTG CTGTGTGTGTGTCTGTGTGTGTGTGTG CTG  intron_variant     0.2651      &lt;NA&gt;          &lt;NA&gt;          13.94   &lt;NA&gt;</code></pre>
+<pre><code>##                                                 CHROM       POS                                              ID                         REF ALT vep_Consequence vep_MAX_AF vep_MAX_AF_POPS SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
+## chr10_113144088_CTGTGTGTGTGTCTGTGTGTGTGTGTG_C   chr10 113144088   chr10_113144088_CTGTGTGTGTGTCTGTGTGTGTGTGTG_C CTGTGTGTGTGTCTGTGTGTGTGTGTG   C  intron_variant         NA            &lt;NA&gt;      &lt;NA&gt;          &lt;NA&gt;          13.87   &lt;NA&gt;
+## chr10_113144088_CTGTGTGTGTGTCTGTGTGTGTGTGTG_CTG chr10 113144088 chr10_113144088_CTGTGTGTGTGTCTGTGTGTGTGTGTG_CTG CTGTGTGTGTGTCTGTGTGTGTGTGTG CTG  intron_variant     0.2651             AMR      &lt;NA&gt;          &lt;NA&gt;          13.94   &lt;NA&gt;</code></pre>
 <pre class="r"><code># 9) chr11_32428699_G_GG
 vcf_variants.df %&gt;% 
   filter(CHROM==&quot;chr11&quot;, POS&gt;=32428699 - 2, POS&lt;=32428699 + 2) %&gt;% 
   select(selected_fields)</code></pre>
-<pre><code>##                       CHROM      POS                    ID REF ALT vep_Consequence vep_MAX_AF SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
-## chr11_32428698_CG_CGG chr11 32428698 chr11_32428698_CG_CGG  CG CGG  intron_variant     0.5726      &lt;NA&gt;          &lt;NA&gt;          1.491   &lt;NA&gt;
-## chr11_32428698_CG_C   chr11 32428698   chr11_32428698_CG_C  CG   C  intron_variant     0.0521      &lt;NA&gt;          &lt;NA&gt;          0.044   &lt;NA&gt;</code></pre>
+<pre><code>##                       CHROM      POS                    ID REF ALT vep_Consequence vep_MAX_AF vep_MAX_AF_POPS SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
+## chr11_32428698_CG_CGG chr11 32428698 chr11_32428698_CG_CGG  CG CGG  intron_variant     0.5726             AFR      &lt;NA&gt;          &lt;NA&gt;          1.491   &lt;NA&gt;
+## chr11_32428698_CG_C   chr11 32428698   chr11_32428698_CG_C  CG   C  intron_variant     0.0521             SAS      &lt;NA&gt;          &lt;NA&gt;          0.044   &lt;NA&gt;</code></pre>
 <pre class="r"><code># 10) chr13_20081999_TT_T
 vcf_variants.df %&gt;% 
   filter(CHROM==&quot;chr13&quot;, POS&gt;=20081999 - 2, POS&lt;=20081999 + 2) %&gt;% 
   select(selected_fields)</code></pre>
-<pre><code>##                       CHROM      POS                    ID REF ALT vep_Consequence vep_MAX_AF SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
-## chr13_20081998_CTT_CT chr13 20081998 chr13_20081998_CTT_CT CTT  CT  intron_variant     0.8750      &lt;NA&gt;          &lt;NA&gt;          15.23   &lt;NA&gt;
-## chr13_20081998_CTT_C  chr13 20081998  chr13_20081998_CTT_C CTT   C  intron_variant     0.2528      &lt;NA&gt;          &lt;NA&gt;          15.38   &lt;NA&gt;</code></pre>
+<pre><code>##                       CHROM      POS                    ID REF ALT vep_Consequence vep_MAX_AF vep_MAX_AF_POPS SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
+## chr13_20081998_CTT_CT chr13 20081998 chr13_20081998_CTT_CT CTT  CT  intron_variant     0.8750             EAS      &lt;NA&gt;          &lt;NA&gt;          15.23   &lt;NA&gt;
+## chr13_20081998_CTT_C  chr13 20081998  chr13_20081998_CTT_C CTT   C  intron_variant     0.2528      gnomAD_AMR      &lt;NA&gt;          &lt;NA&gt;          15.38   &lt;NA&gt;</code></pre>
 <pre class="r"><code># 11) chr14_95099760_AC_A - several multiallelic variants in vicinity
 vcf_variants.df %&gt;% 
   filter(CHROM==&quot;chr14&quot;,POS&gt;=95099760 - 2, POS&lt;=95099760 + 2) %&gt;% 
   select(selected_fields)</code></pre>
-<pre><code>##                                         CHROM      POS                                      ID          REF         ALT vep_Consequence vep_MAX_AF SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
-## chr14_95099758_AC_A                     chr14 95099758                     chr14_95099758_AC_A           AC           A  intron_variant    0.17450      &lt;NA&gt;          &lt;NA&gt;          3.630   &lt;NA&gt;
-## chr14_95099760_ACACACACACAC_A           chr14 95099760           chr14_95099760_ACACACACACAC_A ACACACACACAC           A  intron_variant    0.17700      &lt;NA&gt;          &lt;NA&gt;          5.726 Benign
-## chr14_95099760_ACACACACACAC_AACACACACAC chr14 95099760 chr14_95099760_ACACACACACAC_AACACACACAC ACACACACACAC AACACACACAC  intron_variant    0.02378      &lt;NA&gt;          &lt;NA&gt;          3.192   &lt;NA&gt;
-## chr14_95099762_ACACACACAC_A             chr14 95099762             chr14_95099762_ACACACACAC_A   ACACACACAC           A  intron_variant    0.02323      &lt;NA&gt;          &lt;NA&gt;          5.721 Benign
-## chr14_95099762_ACACACACAC_*             chr14 95099762             chr14_95099762_ACACACACAC_*   ACACACACAC           *            &lt;NA&gt;         NA      &lt;NA&gt;          &lt;NA&gt;             NA   &lt;NA&gt;</code></pre>
+<pre><code>##                                         CHROM      POS                                      ID          REF         ALT vep_Consequence vep_MAX_AF vep_MAX_AF_POPS SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
+## chr14_95099758_AC_A                     chr14 95099758                     chr14_95099758_AC_A           AC           A  intron_variant    0.17450      gnomAD_EAS      &lt;NA&gt;          &lt;NA&gt;          3.630   &lt;NA&gt;
+## chr14_95099760_ACACACACACAC_A           chr14 95099760           chr14_95099760_ACACACACACAC_A ACACACACACAC           A  intron_variant    0.17700      gnomAD_EAS      &lt;NA&gt;          &lt;NA&gt;          5.726 Benign
+## chr14_95099760_ACACACACACAC_AACACACACAC chr14 95099760 chr14_95099760_ACACACACACAC_AACACACACAC ACACACACACAC AACACACACAC  intron_variant    0.02378      gnomAD_AFR      &lt;NA&gt;          &lt;NA&gt;          3.192   &lt;NA&gt;
+## chr14_95099762_ACACACACAC_A             chr14 95099762             chr14_95099762_ACACACACAC_A   ACACACACAC           A  intron_variant    0.02323      gnomAD_AFR      &lt;NA&gt;          &lt;NA&gt;          5.721 Benign
+## chr14_95099762_ACACACACAC_*             chr14 95099762             chr14_95099762_ACACACACAC_*   ACACACACAC           *            &lt;NA&gt;         NA            &lt;NA&gt;      &lt;NA&gt;          &lt;NA&gt;             NA   &lt;NA&gt;</code></pre>
 <pre class="r"><code># 12) chr20_45348236_C_CC
 vcf_variants.df %&gt;% 
   filter(CHROM==&quot;chr20&quot;, POS&gt;=45348236 - 2, POS&lt;=45348236 + 2) %&gt;% 
   select(selected_fields)</code></pre>
-<pre><code>##                       CHROM      POS                    ID REF ALT vep_Consequence vep_MAX_AF SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
-## chr20_45348235_GC_G   chr20 45348235   chr20_45348235_GC_G  GC   G  intron_variant     0.9325      &lt;NA&gt;          &lt;NA&gt;          3.219   &lt;NA&gt;
-## chr20_45348235_GC_GCC chr20 45348235 chr20_45348235_GC_GCC  GC GCC  intron_variant         NA      &lt;NA&gt;          &lt;NA&gt;          4.164   &lt;NA&gt;</code></pre>
+<pre><code>##                       CHROM      POS                    ID REF ALT vep_Consequence vep_MAX_AF vep_MAX_AF_POPS SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
+## chr20_45348235_GC_G   chr20 45348235   chr20_45348235_GC_G  GC   G  intron_variant     0.9325             EAS      &lt;NA&gt;          &lt;NA&gt;          3.219   &lt;NA&gt;
+## chr20_45348235_GC_GCC chr20 45348235 chr20_45348235_GC_GCC  GC GCC  intron_variant         NA            &lt;NA&gt;      &lt;NA&gt;          &lt;NA&gt;          4.164   &lt;NA&gt;</code></pre>
 <pre class="r"><code># 13) chr21_42760757_CC_C
 vcf_variants.df %&gt;% 
   filter(CHROM==&quot;chr21&quot;, POS&gt;=42760757 - 2, POS&lt;=42760757 + 2) %&gt;% 
   select(selected_fields)</code></pre>
-<pre><code>##                       CHROM      POS                    ID REF ALT vep_Consequence vep_MAX_AF SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
-## chr21_42760756_ACC_A  chr21 42760756  chr21_42760756_ACC_A ACC   A  intron_variant     0.6241      &lt;NA&gt;          &lt;NA&gt;          1.419   &lt;NA&gt;
-## chr21_42760756_ACC_AC chr21 42760756 chr21_42760756_ACC_AC ACC  AC  intron_variant     0.3156      &lt;NA&gt;          &lt;NA&gt;          0.931   &lt;NA&gt;</code></pre>
+<pre><code>##                       CHROM      POS                    ID REF ALT vep_Consequence vep_MAX_AF vep_MAX_AF_POPS SIFT_call PolyPhen_call vep_CADD_PHRED CLNSIG
+## chr21_42760756_ACC_A  chr21 42760756  chr21_42760756_ACC_A ACC   A  intron_variant     0.6241             AFR      &lt;NA&gt;          &lt;NA&gt;          1.419   &lt;NA&gt;
+## chr21_42760756_ACC_AC chr21 42760756 chr21_42760756_ACC_AC ACC  AC  intron_variant     0.3156             AMR      &lt;NA&gt;          &lt;NA&gt;          0.931   &lt;NA&gt;</code></pre>
 <pre class="r"><code># 14) chrX_45076680_TT_T
 vcf_variants.df %&gt;% 
   filter(CHROM==&quot;chrX&quot;, POS&gt;=45076680 - 2, POS&lt;=45076680 + 2) %&gt;% 
   select(selected_fields)</code></pre>
-<pre><code>##                      CHROM      POS                   ID REF ALT vep_Consequence vep_MAX_AF SIFT_call PolyPhen_call vep_CADD_PHRED        CLNSIG
-## chrX_45076679_CTT_C   chrX 45076679  chrX_45076679_CTT_C CTT   C  intron_variant     0.4351      &lt;NA&gt;          &lt;NA&gt;          0.215 Likely_benign
-## chrX_45076679_CTT_CT  chrX 45076679 chrX_45076679_CTT_CT CTT  CT  intron_variant     0.5605      &lt;NA&gt;          &lt;NA&gt;          0.077          &lt;NA&gt;</code></pre>
+<pre><code>##                      CHROM      POS                   ID REF ALT vep_Consequence vep_MAX_AF vep_MAX_AF_POPS SIFT_call PolyPhen_call vep_CADD_PHRED        CLNSIG
+## chrX_45076679_CTT_C   chrX 45076679  chrX_45076679_CTT_C CTT   C  intron_variant     0.4351      gnomAD_EAS      &lt;NA&gt;          &lt;NA&gt;          0.215 Likely_benign
+## chrX_45076679_CTT_CT  chrX 45076679 chrX_45076679_CTT_CT CTT  CT  intron_variant     0.5605      gnomAD_FIN      &lt;NA&gt;          &lt;NA&gt;          0.077          &lt;NA&gt;</code></pre>
 </div>
 <div id="biallelic-variants" class="section level1" number="6">
 <h1 number="6"><span class="header-section-number">6</span> Biallelic variants</h1>
@@ -639,11 +639,11 @@ base::table(shared_biallelics, useNA = &quot;always&quot;)</code></pre>
 ## loaded via a namespace (and not attached):
 ##  [1] pillar_1.4.7           compiler_3.6.2         XVector_0.26.0         bitops_1.0-6           tools_3.6.2            zlibbioc_1.32.0        digest_0.6.27          lattice_0.20-41        evaluate_0.14          lifecycle_1.0.0        tibble_3.0.6           pkgconfig_2.0.3        rlang_0.4.10           Matrix_1.3-2           cli_2.3.0              DBI_1.1.1              yaml_2.2.1             xfun_0.21              GenomeInfoDbData_1.2.2 stringr_1.4.0          knitr_1.31             generics_0.1.0         vctrs_0.3.6            grid_3.6.2             tidyselect_1.1.0       glue_1.4.2             R6_2.5.0               rmarkdown_2.6          purrr_0.3.4            magrittr_2.0.1         ellipsis_0.3.1         htmltools_0.5.1.1      assertthat_0.2.1       stringi_1.5.3          RCurl_1.98-1.2         crayon_1.4.1</code></pre>
 <pre class="r"><code>Sys.time()</code></pre>
-<pre><code>## [1] &quot;2021-04-15 09:06:11 BST&quot;</code></pre>
+<pre><code>## [1] &quot;2021-04-15 13:47:24 BST&quot;</code></pre>
 <pre class="r"><code>gc()</code></pre>
 <pre><code>##            used  (Mb) gc trigger  (Mb) limit (Mb) max used  (Mb)
-## Ncells  6376148 340.6   10917504 583.1         NA  7537841 402.6
-## Vcells 46453483 354.5   92529630 706.0      16384 92502093 705.8</code></pre>
+## Ncells  6376148 340.6   10917504 583.1         NA  7539267 402.7
+## Vcells 46453575 354.5   92529630 706.0      16384 92502635 705.8</code></pre>
 </div>
 
 

@@ -95,6 +95,7 @@ dim(gt_add.mx)
 # Add rownames to variants
 variants.df[1:5,1:5]
 rownames(variants.df) <- variants.df$ID
+variants.df[1:5,1:5]
 
 # Sanity checks
 sum(rownames(variants.df) != rownames(gt.mx))
