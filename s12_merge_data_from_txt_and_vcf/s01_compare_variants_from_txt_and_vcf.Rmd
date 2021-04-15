@@ -1,7 +1,7 @@
 ---
 title: "Compare variants from text files and multisample VCF"
 author: "Alexey Larionov"
-date: "14 Apr 2021"
+date: "15 Apr 2021"
 output:
   html_document:
     toc: true
@@ -13,7 +13,9 @@ editor_options:
 
 # Summary
 
-Most TXT variants are found in VCF, except for a handful of multi-allelic variants (14 of 4,642), which have to be excluded  
+Most TXT variants are found in VCF, except for a handful of multi-allelic variants (14 of 4,642), which have no functional consequences (low CADD, benign etc) and can be excluded  
+
+Interestingly, I noted one * ALt (missed variant # 11), which did not cause VEP error in the upstream analysis: it seems that the new version of VEP can deal with * Alt without error  
 
 <style>
 pre{
@@ -121,7 +123,7 @@ shared_ids <- txt_variants.df$VCF_ID %in% vcf_variants.df$ID
 base::table(shared_ids, useNA = "always")
 
 txt_variants_shared.df <- txt_variants.df[shared_ids,]
-base::table(txt_variants_shared.df$var_type)
+base::table(txt_variants_shared.df$var_type, useNA = "always")
 
 rm(txt_variants_shared.df)
 
@@ -134,80 +136,78 @@ rm(txt_variants_shared.df)
 txt_variants_missed.df <- txt_variants.df[!shared_ids,]
 txt_variants_missed.df[,"VCF_ID"]
 
+selected_fields <- c("CHROM","POS","ID","REF","ALT","vep_Consequence","vep_MAX_AF",
+                     "SIFT_call","PolyPhen_call","vep_CADD_PHRED","CLNSIG")
+
 # 1) chr1_114398011_AA_A
 vcf_variants.df %>% 
-  filter(CHROM=="chr1",POS==114398011 - 1) %>% 
-  select(CHROM,POS,ID,REF,ALT)
+  filter(CHROM=="chr1", POS>=114398011 - 2, POS<=114398011 + 2) %>% 
+  select(selected_fields)
 
 # 2) chr2_120974781_TGT_T - shift by -2
 vcf_variants.df %>% 
-  filter(CHROM=="chr2",POS==120974781 - 2) %>% 
-  select(CHROM,POS,ID,REF,ALT)
+  filter(CHROM=="chr2", POS>=120974781 - 2,  POS<=120974781 + 2) %>% 
+  select(selected_fields)
 
 # 3) chr2_211713655_AA_A
 vcf_variants.df %>% 
-  filter(CHROM=="chr2",POS==211713655 - 1) %>% 
-  select(CHROM,POS,ID,REF,ALT)
+  filter(CHROM=="chr2", POS>=211713655 - 2, POS<=211713655 + 2) %>% 
+  select(selected_fields)
 
 # 4) chr7_5997427_AA_A
 vcf_variants.df %>% 
-  filter(CHROM=="chr7",POS==5997427 - 1) %>% 
-  select(CHROM,POS,ID,REF,ALT)
+  filter(CHROM=="chr7", POS>=5997427 - 2, POS<=5997427 + 2) %>% 
+  select(selected_fields)
 
 # 5) chr7_42223337_A_AA
 vcf_variants.df %>% 
-  filter(CHROM=="chr7",POS==42223337 - 1) %>% 
-  select(CHROM,POS,ID,REF,ALT)
+  filter(CHROM=="chr7", POS>=42223337 - 2, POS<=42223337 + 2) %>% 
+  select(selected_fields)
 
 # 6) chr7_116769622_TT_T
 vcf_variants.df %>% 
-  filter(CHROM=="chr7",POS==116769622 - 1) %>% 
-  select(CHROM,POS,ID,REF,ALT)
+  filter(CHROM=="chr7", POS>=116769622 - 2, POS<=116769622 + 2) %>% 
+  select(selected_fields)
 
 # 7) chr8_43013313_TT_T
 vcf_variants.df %>% 
-  filter(CHROM=="chr8",POS==43013313 - 1) %>% 
-  select(CHROM,POS,ID,REF,ALT)
+  filter(CHROM=="chr8", POS>=43013313 - 2, POS<=43013313 + 2) %>% 
+  select(selected_fields)
 
 # 8) chr10_113144090_GTGTGTGTGTCTGTGTGTGTGTGTG_G - shift by 2
 vcf_variants.df %>% 
-  filter(CHROM=="chr10",POS==113144090 - 2) %>% 
-  select(CHROM,POS,ID,REF,ALT)
+  filter(CHROM=="chr10", POS>=113144090 - 2, POS<=113144090 + 2) %>% 
+  select(selected_fields)
 
 # 9) chr11_32428699_G_GG
 vcf_variants.df %>% 
-  filter(CHROM=="chr11",POS==32428699 - 1) %>% 
-  select(CHROM,POS,ID,REF,ALT)
+  filter(CHROM=="chr11", POS>=32428699 - 2, POS<=32428699 + 2) %>% 
+  select(selected_fields)
 
 # 10) chr13_20081999_TT_T
 vcf_variants.df %>% 
-  filter(CHROM=="chr13",POS==20081999 - 1) %>% 
-  select(CHROM,POS,ID,REF,ALT)
+  filter(CHROM=="chr13", POS>=20081999 - 2, POS<=20081999 + 2) %>% 
+  select(selected_fields)
 
-# 10) chr13_20081999_TT_T
+# 11) chr14_95099760_AC_A - several multiallelic variants in vicinity
 vcf_variants.df %>% 
-  filter(CHROM=="chr13",POS==20081999 - 1) %>% 
-  select(CHROM,POS,ID,REF,ALT)
-
-# 11) chr14_95099760_AC_A
-vcf_variants.df %>% 
-  filter(CHROM=="chr14",POS==95099760 - 1) %>% 
-  select(CHROM,POS,ID,REF,ALT)
+  filter(CHROM=="chr14",POS>=95099760 - 2, POS<=95099760 + 2) %>% 
+  select(selected_fields)
 
 # 12) chr20_45348236_C_CC
 vcf_variants.df %>% 
-  filter(CHROM=="chr20",POS==45348236 - 1) %>% 
-  select(CHROM,POS,ID,REF,ALT)
+  filter(CHROM=="chr20", POS>=45348236 - 2, POS<=45348236 + 2) %>% 
+  select(selected_fields)
 
 # 13) chr21_42760757_CC_C
 vcf_variants.df %>% 
-  filter(CHROM=="chr21",POS==42760757 - 1) %>% 
-  select(CHROM,POS,ID,REF,ALT)
+  filter(CHROM=="chr21", POS>=42760757 - 2, POS<=42760757 + 2) %>% 
+  select(selected_fields)
 
 # 14) chrX_45076680_TT_T
 vcf_variants.df %>% 
-  filter(CHROM=="chrX",POS==45076680 - 1) %>% 
-  select(CHROM,POS,ID,REF,ALT)
+  filter(CHROM=="chrX", POS>=45076680 - 2, POS<=45076680 + 2) %>% 
+  select(selected_fields)
 
 ```
 

@@ -1,0 +1,191 @@
+---
+title: "Merge variants from text files and multisample VCF"
+author: "Alexey Larionov"
+date: "15 Apr 2021"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float: true
+editor_options:
+  chunk_output_type: console
+---
+
+# Summary
+
+...
+
+<style>
+pre{
+  overflow-x: auto;
+}
+pre code{
+  word-wrap: normal;
+  white-space: pre;
+}
+</style>
+
+```{r echo=F}
+options(width=999)
+```
+
+# Start section
+
+```{r}
+
+# Time
+Sys.time()
+
+# Clean up
+rm(list=ls())
+graphics.off()
+gc()
+
+# Options
+options(stringsAsFactors = F)
+
+# Working folders
+# Files and folders
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+data_folder <- file.path(base_folder,"data","s12_merge_data_from_txt_and_vcf")
+#dir.create(data_folder)
+scripts_folder <- file.path(base_folder,"scripts","s12_merge_data_from_txt_and_vcf")
+setwd(scripts_folder)
+
+# Required libraries
+library(dplyr)
+
+```
+
+# Load data
+
+## Data from text files
+
+```{r}
+
+# Load
+load(file.path(base_folder,"data/s10_add_vcf_coordinates/s01_add_vcf_coordinates.RData"))
+
+# Restore folders
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+data_folder <- file.path(base_folder,"data","s12_merge_data_from_txt_and_vcf")
+scripts_folder <- file.path(base_folder,"scripts","s12_merge_data_from_txt_and_vcf")
+
+# Check SE
+zheng.se
+
+# Make row-names consistent with VCF data
+rownames(zheng.se) <- txt_variants.gr$VCF_ID
+  
+# Clean-up
+rm(variants.df, functions_folder)
+
+```
+
+## Data from nultisample VCF
+
+```{r}
+
+# Load
+load(file.path(base_folder,"data/s11_vep_annotated_multisample_vcf/s04_make_se.RData"))
+
+# Restore folders
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+data_folder <- file.path(base_folder,"data","s12_merge_data_from_txt_and_vcf")
+scripts_folder <- file.path(base_folder,"scripts","s12_merge_data_from_txt_and_vcf")
+
+# Check SE
+zheng_multisample_vcf.se
+
+```
+
+# Keep only shared variants
+
+```{r}
+
+# Identify shared variants
+shared_ids_index <- rownames(zheng.se) %in% rownames(zheng_multisample_vcf.se)
+base::table(shared_ids_index, useNA = "always")
+shared_ids <- rownames(zheng.se)[shared_ids_index]
+
+# Keep only shared variants
+txt.se <- zheng.se[shared_ids,]
+txt.se
+
+vcf.se <- zheng_multisample_vcf.se[shared_ids,]
+vcf.se
+
+# Clean-up
+rm(shared_ids_index,shared_ids,zheng.se,zheng_multisample_vcf.se)
+
+```
+
+# Prepare data for merged se
+
+## Row data: variants info  
+
+Add VEP and other annotations from VCF data to GRanges from TXT data  
+
+```{r}
+
+# Extract variants data
+txt_variants.gr <- rowRanges(zheng.se)
+summary(txt_variants.gr)
+head(txt_variants.gr)[,1:2]
+dim(mcols(txt_variants.gr))
+colnames(mcols(txt_variants.gr))
+str(mcols(txt_variants.gr))
+
+# Extract variants data
+vcf_variants.df <- rowData(zheng_multisample_vcf.se)
+summary(vcf_variants.df)
+vcf_variants.df[1:5,1:5]
+dim(vcf_variants.df)
+colnames(vcf_variants.df)
+str(vcf_variants.df)
+
+```
+
+## colData: samples info
+
+Data Frame: for now just keep info from TXT data, later add more phenotye data
+
+```{r}
+#check consistence
+```
+
+## genotypes and other "assays"
+
+Keep matrices from both TXT and VEP data
+
+```{r}
+#check consistence
+```
+
+## Metadata
+
+List: keep metadata fromboth TXT and VEP data  
+
+```{r}
+
+```
+
+# Summarize and save
+
+```{r}
+
+ls()
+
+save.image(file.path(data_folder,"s01_compare_variants_from_txt_and_vcf.RData"))
+
+```
+
+# Final section
+
+```{r}
+
+sessionInfo()
+Sys.time()
+gc()
+
+```
