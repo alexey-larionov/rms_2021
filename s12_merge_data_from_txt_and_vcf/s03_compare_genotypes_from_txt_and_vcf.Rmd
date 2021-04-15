@@ -1,0 +1,161 @@
+---
+title: "Merge variants from text files and multisample VCF"
+author: "Alexey Larionov"
+date: "15 Apr 2021"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float: true
+editor_options:
+  chunk_output_type: console
+---
+
+# Summary
+
+...
+
+<style>
+pre{
+  overflow-x: auto;
+}
+pre code{
+  word-wrap: normal;
+  white-space: pre;
+}
+</style>
+
+```{r echo=F}
+options(width=999)
+```
+
+# Start section
+
+```{r}
+
+# Time
+Sys.time()
+
+# Clean up
+rm(list=ls())
+graphics.off()
+gc()
+
+# Options
+options(stringsAsFactors = F)
+
+# Working folders
+# Files and folders
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+data_folder <- file.path(base_folder,"data","s12_merge_data_from_txt_and_vcf")
+#dir.create(data_folder)
+scripts_folder <- file.path(base_folder,"scripts","s12_merge_data_from_txt_and_vcf")
+setwd(scripts_folder)
+
+# Required libraries
+library(dplyr)
+
+```
+
+# Load data
+
+```{r}
+
+# Load
+load(file.path(data_folder,"s02_merge_variants_from_txt_and_vcf.RData"))
+
+# Restore folders
+base_folder <- "/Users/alexey/Documents/mg/s2021/zhang_tests"
+data_folder <- file.path(base_folder,"data","s12_merge_data_from_txt_and_vcf")
+scripts_folder <- file.path(base_folder,"scripts","s12_merge_data_from_txt_and_vcf")
+
+# Check SE
+zheng_merged.se
+
+```
+
+# Compare genotypes in TXT and VCF  
+
+## Extract genotype tables
+
+```{r}
+
+gt_txt.mx <- assays(zheng_merged.se)$gt_txt
+gt_txt.mx[1:15,1:5]
+
+gt_vcf.mx <- assays(zheng_merged.se)$gt_vcf
+gt_vcf.mx[1:15,1:5]
+
+```
+
+## VCF genotypes corresponding to different genotypes in TXT
+
+```{r}
+
+# Check genotype calls in TXT data
+table(gt_txt.mx, useNA="always")
+
+# Make masks for different genotype calls in TXT
+het_ref_alt1_in_txt <- gt_txt.mx == "Ref/Alt1" & !is.na(gt_txt.mx)
+het_alt1_alt2_in_txt <- gt_txt.mx == "Alt1/Alt2" & !is.na(gt_txt.mx)
+hom_alt1_in_txt <- gt_txt.mx == "Alt1/Alt1" & !is.na(gt_txt.mx)
+gt_na_in_txt <- is.na(gt_txt.mx)
+
+sum(het_ref_alt1_in_txt)
+sum(het_alt1_alt2_in_txt)
+sum(hom_alt1_in_txt)
+sum(gt_na_in_txt)
+
+# Look at the VCF genotypes corresponding to different genotype calls in TXT
+table(gt_vcf.mx[het_ref_alt1_in_txt],useNA="always")
+table(gt_vcf.mx[het_alt1_alt2_in_txt],useNA="always")
+table(gt_vcf.mx[hom_alt1_in_txt],useNA="always")
+table(gt_vcf.mx[gt_na_in_txt],useNA="always")
+
+# Clean-up
+rm(het_ref_alt1_in_txt,het_alt1_alt2_in_txt,hom_alt1_in_txt,gt_na_in_txt)
+
+```
+
+## TXT genotypes corresponding to different genotypes in VCF
+
+```{r}
+
+# Check genotype calls in VCF data
+table(gt_vcf.mx, useNA="always")
+
+# Make masks for different genotype calls in VCF
+hom_ref_in_vcf <- gt_vcf.mx == "0/0" & !is.na(gt_vcf.mx)
+het_01_in_vcf <- gt_vcf.mx == "0/1" & !is.na(gt_vcf.mx)
+het_10_in_vcf <- gt_vcf.mx == "1/0" & !is.na(gt_vcf.mx)
+hom_alt_in_vcf <- gt_vcf.mx == "1/1" & !is.na(gt_vcf.mx)
+gt_na_in_vcf <- is.na(gt_vcf.mx)
+
+sum(hom_ref_in_vcf)
+sum(het_01_in_vcf)
+sum(het_10_in_vcf)
+sum(hom_alt_in_vcf)
+sum(gt_na_in_vcf)
+
+# Look at the VCF genotypes corresponding to different genotype calls in TXT
+table(gt_txt.mx[hom_ref_in_vcf],useNA="always")
+table(gt_txt.mx[het_01_in_vcf],useNA="always")
+table(gt_txt.mx[het_10_in_vcf],useNA="always")
+table(gt_txt.mx[hom_alt_in_vcf],useNA="always")
+table(gt_txt.mx[gt_na_in_vcf],useNA="always")
+
+# Clean-up
+rm(gt_txt.mx,gt_vcf.mx,hom_ref_in_vcf,het_01_in_vcf,het_10_in_vcf,hom_alt_in_vcf,gt_na_in_vcf)
+
+```
+
+# Final section
+
+```{r}
+
+ls()
+sessionInfo()
+Sys.time()
+gc()
+
+```

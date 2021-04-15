@@ -13,7 +13,13 @@ editor_options:
 
 # Summary
 
-...
+Combine data from TXT andf VCF SE:  
+
+- Select and keep only variants overlapping between TXT and VCF  
+- Append selected vannotations from VCF variants data to TXT genomic ranges  
+- Use samples data from TXT (with updated col-names)  
+- Use all matrices from both TXT (genotypes and scores) and VCF (gt, gt_add, dp, gq and ad)  
+- Use metadata from both TXT and VCF  
 
 <style>
 pre{
@@ -75,8 +81,12 @@ scripts_folder <- file.path(base_folder,"scripts","s12_merge_data_from_txt_and_v
 zheng.se
 
 # Make row-names consistent with VCF data
-rownames(zheng.se) <- txt_variants.gr$VCF_ID
-  
+rownames(zheng.se) <- rowRanges(zheng.se)$VCF_ID
+zheng.se
+
+#x.gr <- rowRanges(zheng.se)
+#x.df <- rowData(zheng.se)
+
 # Clean-up
 rm(variants.df, functions_folder)
 
@@ -124,49 +134,176 @@ rm(shared_ids_index,shared_ids,zheng.se,zheng_multisample_vcf.se)
 
 ## Row data: variants info  
 
-Add VEP and other annotations from VCF data to GRanges from TXT data  
+Add selected VCF annotations (ClinVar, VEP and other) to GRanges from TXT data  
+
+Note using **mcols** and **values** to modify meta-data in GRanges  
+https://kasperdanielhansen.github.io/genbioconductor/html/GenomicRanges_GRanges_Usage.html  
 
 ```{r}
 
 # Extract variants data
-txt_variants.gr <- rowRanges(zheng.se)
-summary(txt_variants.gr)
+txt_variants.gr <- rowRanges(txt.se)
+vcf_variants.df <- rowData(vcf.se)
+
+# Explore 
 head(txt_variants.gr)[,1:2]
-dim(mcols(txt_variants.gr))
+head(vcf_variants.df)[,1:5]
+
+# Update colnames in TXT variants
 colnames(mcols(txt_variants.gr))
-str(mcols(txt_variants.gr))
+txt_colnames <- colnames(mcols(txt_variants.gr))
+txt_colnames <- paste("txt",txt_colnames,sep="_")
+txt_colnames -> colnames(mcols(txt_variants.gr))
+colnames(mcols(txt_variants.gr))
 
-# Extract variants data
-vcf_variants.df <- rowData(zheng_multisample_vcf.se)
-summary(vcf_variants.df)
-vcf_variants.df[1:5,1:5]
-dim(vcf_variants.df)
+# Select annotations in VCF variants
 colnames(vcf_variants.df)
-str(vcf_variants.df)
+selected_annotations <- c(
+  "ID","CHROM","POS","END","REF","ALT",
+  "QUAL","DP","DS","MULTIALLELIC",
+  "CLNSIG","CLNREVSTAT","CLNDN",
+  "vep_SYMBOL","vep_BIOTYPE","vep_VARIANT_CLASS",
+  "vep_Consequence","vep_IMPACT",
+  "vep_Existing_variation","vep_SOMATIC","vep_HGVSc","vep_HGVSp",
+  "vep_Codons","vep_cDNA_position","vep_CDS_position","vep_CCDS",
+  "vep_Amino_acids","vep_Protein_position",
+  "vep_AF","vep_gnomAD_AF","vep_MAX_AF","vep_MAX_AF_POPS",
+  "vep_MOTIF_NAME","vep_MOTIF_POS","vep_HIGH_INF_POS","vep_MOTIF_SCORE_CHANGE","vep_TRANSCRIPTION_FACTORS",
+  "SIFT_call","SIFT_score","PolyPhen_call","PolyPhen_score","vep_CADD_PHRED","vep_CADD_RAW",
+  "vep_NEAREST","vep_DOMAINS","vep_PUBMED")
+
+selected_annotations.df <- vcf_variants.df[,selected_annotations]
+
+colnames(selected_annotations.df) <- c(
+  "vcf_ID","vcf_CHROM","vcf_POS","vcf_END","vcf_REF","vcf_ALT",
+  "vcf_QUAL","vcf_DP","vcf_DS","vcf_MULTIALLELIC",
+  "vcf_CLNSIG","vcf_CLNREVSTAT","vcf_CLNDN",
+  "vep_SYMBOL","vep_BIOTYPE","vep_VARIANT_CLASS",
+  "vep_Consequence","vep_IMPACT",
+  "vep_Existing_variation","vep_SOMATIC","vep_HGVSc","vep_HGVSp",
+  "vep_Codons","vep_cDNA_position","vep_CDS_position","vep_CCDS",
+  "vep_Amino_acids","vep_Protein_position",
+  "vep_AF","vep_gnomAD_AF","vep_MAX_AF","vep_MAX_AF_POPS",
+  "vep_MOTIF_NAME","vep_MOTIF_POS","vep_HIGH_INF_POS","vep_MOTIF_SCORE_CHANGE","vep_TRANSCRIPTION_FACTORS",
+  "vep_SIFT_call","vep_SIFT_score","vep_PolyPhen_call","vep_PolyPhen_score","vep_CADD_PHRED","vep_CADD_RAW",
+  "vep_NEAREST","vep_DOMAINS","vep_PUBMED")
+
+# Sanity check
+sum(rownames(txt_variants.gr) != rownames(selected_annotations.df))
+
+# Add annotations 
+values(txt_variants.gr) <- data.frame(values(txt_variants.gr),selected_annotations.df)
+
+# Rename (for clarity)
+variants.gr <- txt_variants.gr
+
+# Clean-up
+rm(txt_colnames,vcf_variants.df,selected_annotations,selected_annotations.df,txt_variants.gr)
 
 ```
 
-## colData: samples info
+## Col data: samples info
 
-Data Frame: for now just keep info from TXT data, later add more phenotye data
+- The colData should be a Data Frame  
+- For now: just keep info from TXT data  
+- Later more phenotype data could be added if needed  
 
 ```{r}
-#check consistence
+
+# Extract colData
+txt_samples.df <- colData(txt.se)
+vcf_samples.df <- colData(vcf.se)
+
+# Explore
+head(txt_samples.df)
+head(vcf_samples.df)
+
+# Sanity check
+sum(txt_samples.df$id != vcf_samples.df$id)
+
+# Add row-names (just in case)
+rownames(txt_samples.df) <- txt_samples.df$id
+
+# Update col-names
+c("id","txt_file","study") -> colnames(txt_samples.df)
+
+# Rename (for clarity)
+samples.df <- txt_samples.df
+
+# Clean-up
+rm(vcf_samples.df,txt_samples.df)
+
 ```
 
-## genotypes and other "assays"
+## Metadata  
 
-Keep matrices from both TXT and VEP data
+- Metadata is optional  
+- If present, Metadata should be a list  
+- Just in case, keep metadata from both TXT and VEP se  
 
 ```{r}
-#check consistence
+
+metadata.ls <- list(metadata(txt.se),metadata(vcf.se))
+metadata.ls
+
 ```
 
-## Metadata
+## Assays: gt, dp, scores etc  
 
-List: keep metadata fromboth TXT and VEP data  
+Keep all matrices from both TXT and VEP data   
+
+Examples of working with summarised experiments:  
+https://bioconductor.org/packages/release/bioc/vignettes/SummarizedExperiment/inst/doc/SummarizedExperiment.html  
 
 ```{r}
+
+# txt
+assays(txt.se)
+
+gt_txt.mx <- assays(txt.se)$genotypes # Extracted oddly 
+bass_scores.mx <- assays(txt.se)$scores
+
+# vcf
+assays(vcf.se)
+
+gt_vcf.mx <- assays(vcf.se)$gt # Extracted oddly 
+gt_add_vcf.mx <- assays(vcf.se)$gt_add
+dp_vcf.mx <- assays(vcf.se)$dp
+gq_vcf.mx <- assays(vcf.se)$gq
+ad_vcf.mx <- assays(vcf.se)$ad # Extracted oddly 
+
+# Clean-up
+rm(txt.se,vcf.se)
+
+```
+
+# Pack merged data to a new SE
+
+```{r}
+
+zheng_merged.se <- SummarizedExperiment(
+  assays=list(gt_txt=gt_txt.mx,
+              bass_scores=bass_scores.mx,
+              gt_vcf=gt_vcf.mx, 
+              gt_add_vcf=gt_add_vcf.mx, 
+              dp_vcf=dp_vcf.mx, 
+              gq_vcf=gq_vcf.mx, 
+              ad_vcf=ad_vcf.mx),
+  rowRanges=variants.gr, 
+  colData=samples.df, 
+  metadata=metadata.ls)
+
+# Check result
+zheng_merged.se
+
+assays(zheng_merged.se)$gt_txt[1:15,1:5] # Looks OK
+assays(zheng_merged.se)$gt_vcf[1:15,1:5]
+assays(zheng_merged.se)$gt_add_vcf[1:15,1:5]
+
+# Clean-up
+rm(samples.df,metadata.ls,variants.gr,
+   gt_txt.mx,bass_scores.mx,
+   gt_vcf.mx,gt_add_vcf.mx,dp_vcf.mx,gq_vcf.mx,ad_vcf.mx)
 
 ```
 
@@ -176,7 +313,7 @@ List: keep metadata fromboth TXT and VEP data
 
 ls()
 
-save.image(file.path(data_folder,"s01_compare_variants_from_txt_and_vcf.RData"))
+save.image(file.path(data_folder,"s02_merge_variants_from_txt_and_vcf.RData"))
 
 ```
 
