@@ -1,7 +1,7 @@
 ---
 title: "Merge variants from text files and multisample VCF"
 author: "Alexey Larionov"
-date: "15 Apr 2021"
+date: "16 Apr 2021"
 output:
   html_document:
     toc: true
@@ -13,13 +13,18 @@ editor_options:
 
 # Summary
 
-Combine data from TXT andf VCF SE:  
+Combine data from TXT andf VCF Summarised Experiments:  
 
 - Select and keep only variants overlapping between TXT and VCF  
-- Append selected vannotations from VCF variants data to TXT genomic ranges  
+- Append selected variant annotations from VCF (VEP etc) data to TXT genomic ranges  
 - Use samples data from TXT (with updated col-names)  
-- Use all matrices from both TXT (genotypes and scores) and VCF (gt, gt_add, dp, gq and ad)  
+- Use all matrices from both: TXT (genotypes and scores) and VCF (gt, gt_add, dp, gq and ad)  
 - Use metadata from both TXT and VCF  
+
+Some refs about Summarized Experiment  
+
+- https://bioconductor.org/packages/release/bioc/vignettes/SummarizedExperiment/inst/doc/SummarizedExperiment.html  
+- https://www.bioconductor.org/help/course-materials/2019/BSS2019/04_Practical_CoreApproachesInBioconductor.html  
 
 <style>
 pre{
@@ -117,6 +122,7 @@ zheng_multisample_vcf.se
 shared_ids_index <- rownames(zheng.se) %in% rownames(zheng_multisample_vcf.se)
 base::table(shared_ids_index, useNA = "always")
 shared_ids <- rownames(zheng.se)[shared_ids_index]
+length(shared_ids)
 
 # Keep only shared variants
 txt.se <- zheng.se[shared_ids,]
@@ -191,7 +197,7 @@ colnames(selected_annotations.df) <- c(
 # Sanity check
 sum(rownames(txt_variants.gr) != rownames(selected_annotations.df))
 
-# Add annotations 
+# Add annotations (mcols, cbind ...)
 values(txt_variants.gr) <- data.frame(values(txt_variants.gr),selected_annotations.df)
 
 # Rename (for clarity)
@@ -229,6 +235,7 @@ c("id","txt_file","study") -> colnames(txt_samples.df)
 
 # Rename (for clarity)
 samples.df <- txt_samples.df
+head(samples.df)
 
 # Clean-up
 rm(vcf_samples.df,txt_samples.df)
@@ -243,7 +250,8 @@ rm(vcf_samples.df,txt_samples.df)
 
 ```{r}
 
-metadata.ls <- list(metadata(txt.se),metadata(vcf.se))
+metadata.ls <- list(metadata_from_txt_se=metadata(txt.se),
+                    vcf_info_fields=metadata(vcf.se))
 metadata.ls
 
 ```
@@ -263,6 +271,8 @@ assays(txt.se)
 gt_txt.mx <- assays(txt.se)$genotypes # Extracted oddly 
 bass_scores.mx <- assays(txt.se)$scores
 
+gt_txt.mx[1:5,1:5] # Extracted oddly, but the content is OK
+
 # vcf
 assays(vcf.se)
 
@@ -271,6 +281,9 @@ gt_add_vcf.mx <- assays(vcf.se)$gt_add
 dp_vcf.mx <- assays(vcf.se)$dp
 gq_vcf.mx <- assays(vcf.se)$gq
 ad_vcf.mx <- assays(vcf.se)$ad # Extracted oddly 
+
+gt_vcf.mx[1:5,1:5] # Extracted oddly, but the content is OK
+ad_vcf.mx[1:5,1:5] # Extracted oddly, but the content is OK
 
 # Clean-up
 rm(txt.se,vcf.se)
